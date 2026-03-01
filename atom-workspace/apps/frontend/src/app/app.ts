@@ -418,55 +418,29 @@ export class App implements OnInit, AfterViewInit {
   }
 
   // ==================== CHAT TESTING ====================
+
   async sendChatMessage() {
     const message = this.chatInput().trim();
     if (!message || this.isChatLoading()) return;
 
-    // Add user message
-    const userMsg: ChatMessage = {
-      role: 'user',
-      content: message,
-      timestamp: new Date(),
-    };
-    this.chatMessages.update((curr) => [...curr, userMsg]);
     this.chatInput.set('');
     this.isChatLoading.set(true);
     this.startLoadingTextRotation();
 
     try {
-      const response = await fetch(this.WEBCHAT_URL, {
+      // The backend saves both user & assistant messages to Firestore.
+      // The real-time chatSub stream will update the UI automatically.
+      await fetch(this.WEBCHAT_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: message,
-          sessionId: 'web-test-session', // A fixed session ID for the test chat to remember context
+          sessionId: 'web-test-session',
         }),
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const assistantMsg: ChatMessage = {
-          role: 'assistant',
-          content: data.response || '✅ Received empty response.',
-          timestamp: new Date(),
-        };
-        this.chatMessages.update((curr) => [...curr, assistantMsg]);
-      } else {
-        const assistantMsg: ChatMessage = {
-          role: 'assistant',
-          content: 'The endpoint returned status ' + response.status + '.',
-          timestamp: new Date(),
-        };
-        this.chatMessages.update((curr) => [...curr, assistantMsg]);
-      }
     } catch {
-      const assistantMsg: ChatMessage = {
-        role: 'assistant',
-        content:
-          '⚠️ Could not reach the backend. Make sure Firebase Cloud Functions are deployed. Run: `firebase deploy --only functions`',
-        timestamp: new Date(),
-      };
-      this.chatMessages.update((curr) => [...curr, assistantMsg]);
+      // Network error — backend unreachable, nothing was saved
+      console.error('Could not reach backend');
     }
 
     this.stopLoadingTextRotation();
