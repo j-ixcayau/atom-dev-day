@@ -49,4 +49,4 @@ backend/.env
 
 .firebase/
 firebase-debug.log
-backend/atom-credentials.json
+atom-credentials.json

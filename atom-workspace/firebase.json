@@ -20,7 +20,8 @@
       ],
       "predeploy": [
         "npx nx build backend",
-        "cp backend/.env dist/backend/.env"
+        "cp backend/.env dist/backend/.env",
+        "cp atom-credentials.json dist/backend/atom-credentials.json 2>/dev/null || true"
       ]
     }
   ],
