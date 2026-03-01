@@ -1,0 +1,28 @@
+:host {
+    display: block;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+}
+
+.node-card {
+    background: rgba(29, 27, 39, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.1s ease;
+}
+
+.node-card:hover {
+    box-shadow: 0 0 24px rgba(124, 58, 237, 0.15);
+}
+
+.port-input,
+.port-output {
+    transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.port-input:hover,
+.port-output:hover {
+    box-shadow: 0 0 12px rgba(124, 58, 237, 0.5);
+}

@@ -1,0 +1,44 @@
+{
+  "firestore": {
+    "database": "(default)",
+    "location": "nam5",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "functions": [
+    {
+      "source": "dist/backend",
+      "codebase": "default",
+      "runtime": "nodejs20",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npx nx build backend",
+        "cp backend/.env dist/backend/.env"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": "dist/apps/frontend/browser",
+    "predeploy": [
+      "npx nx build frontend"
+    ],
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}
