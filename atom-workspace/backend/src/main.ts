@@ -4,46 +4,37 @@ import * as functions from 'firebase-functions/v2';
 import * as admin from 'firebase-admin';
 import TelegramBot from 'node-telegram-bot-api';
 import { OrchestratorService } from './services/orchestrator.service';
-import { CatalogSpecialistService } from './services/catalog.service';
-import { GeneralInfoService } from './services/general-info.service';
-import { AppointmentService } from './services/appointment.service';
 import { MemoryService, Message } from './services/memory.service';
 import { SummarizerService } from './services/summarizer.service';
 import { GenericService } from './services/generic.service';
 import { FlowEngineService, FlowGraph } from './services/flow-engine.service';
+import { ActionRunnerService } from './services/action-runner.service';
+import { GenericValidatorService } from './services/generic-validator.service';
+import { GenericSpecialistService } from './services/generic-specialist.service';
 
-// Initialize Firebase Admin (if not already initialized by MemoryService)
+// ... (Firebase and DB initialization remains exactly the same below this line)
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 const db = admin.firestore();
 
-// Initialize services
+// Initialize generic graph services
 const orchestrator = new OrchestratorService();
-const catalogSpecialist = new CatalogSpecialistService();
-const generalInfoService = new GeneralInfoService();
-const appointmentService = new AppointmentService();
 const memoryService = new MemoryService();
 const summarizerService = new SummarizerService();
-const genericService = new GenericService();
 const flowEngine = new FlowEngineService();
+const actionRunner = new ActionRunnerService();
 
-/**
- * Configure the Telegram bot.
- * We use polling false because Cloud Functions act as a webhook receiver.
- */
-const TELEGRAM_TOKEN =
-  process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
+const genericValidator = new GenericValidatorService();
+const genericSpecialist = new GenericSpecialistService();
+const genericService = new GenericService(); // Fallback Generic Node processing
+
+const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN_HERE';
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 
-/**
- * Shared Dynamic Flow Execution Helper
- */
 async function processMessage(sessionId: string, userMessage: string): Promise<{ response: string; intent: string }> {
-  // 1. Fetch memory
-  const { messages: chatHistory, summary, userName } = await memoryService.getSessionData(sessionId);
+  const { messages: chatHistory, summary, userName, language } = await memoryService.getSessionData(sessionId);
 
-  // 2. Load Active Flow Configuration
   let graph: FlowGraph | null = null;
   try {
     const activeFlowDoc = await db.collection('flowConfigs').doc('active').get();
@@ -58,56 +49,84 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
      return { response: "System: No dynamic flow configuration found in Firestore. Please 'Deploy' from the visual editor first.", intent: "NONE" };
   }
 
-  // 3. Find Orchestrator Node
   const orchestratorNode = flowEngine.findNodeByType(graph, 'orchestrator');
   if (!orchestratorNode) {
      return { response: "System: Flow configuration error. Missing Orchestrator Node. Please add it to the graph.", intent: "NONE" };
   }
 
-  // 4. Classify Intent Dynamically using the node's configured prompt and labels
-  const intent = await orchestrator.classifyIntent(summary, userName, userMessage, orchestratorNode.data);
+  const behaviorRules = [];
+  if (language) {
+    behaviorRules.push(`The user has chosen to speak the ISO language code '${language}'. You MUST reply strictly in '${language}' natively.`);
+  }
+  behaviorRules.push(`Keep your answers short, concise, conversational, and human-like. Do NOT be robotic or overly formal. Avoid long paragraphs.`);
+  const enhancedSummary = `${summary}\n\n[SYSTEM BEHAVIOR INSTRUCTIONS]:\n${behaviorRules.join('\n')}`;
+
+  // 1. Ask Orchestrator to output ONE of the user's custom visual labels
+  const intent = await orchestrator.classifyIntent(enhancedSummary, userName, userMessage, orchestratorNode.data);
   
-  // 5. Evaluate Topology: Find if a path exists for this label
-  const nextNodeId = flowEngine.findNextNodeId(graph, orchestratorNode.id, intent);
+  // 2. Resolve Graph Connections!
+  let nextNodeId = flowEngine.findNextNodeId(graph, orchestratorNode.id, intent);
   let aiResponse = '';
+  // Track extracted data to pass between connected nodes
+  let activeExtractedData: Record<string, string> = {}; 
 
   if (!nextNodeId) {
-     // The edge does not exist in the visual editor for this intent!
      aiResponse = `System: The Orchestrator classified this as '${intent}', but there is no edge connected to the output handle '${intent}' in the visual editor. Please connect this path and Deploy.`;
   } else {
-     // A valid edge exists, route to the robust specialized service logic
-     switch (intent) {
-        case 'CATALOG': {
-          const validation = await catalogSpecialist.validateRequest(chatHistory, userMessage, summary, userName);
-          if (!validation.isValid && validation.missingInfoMessage) {
-            aiResponse = validation.missingInfoMessage;
-          } else if (validation.extractedData) {
-            aiResponse = await catalogSpecialist.generateResponse(validation.extractedData, userName);
-          }
-          break;
+     // 3. Dynamic Execution Loop
+     // We process the *first* node attached to orchestrator. If it's a Validator, we might follow its output edge to a Specialist!
+     let limit = 0;
+     while (nextNodeId && limit < 3) { // Limit iterations to prevent infinite recursion bugs
+        limit++;
+        const targetNode = graph.nodes.find(n => n.id === nextNodeId);
+        if (!targetNode) break;
+
+        const nodeType = targetNode.type;
+        const nodeData = targetNode.data || {};
+
+        if (nodeType === 'validator') {
+             // Run dynamically generated Zod Array validation
+             const validation = await genericValidator.validateRequest(chatHistory, userMessage, enhancedSummary, userName, nodeData);
+             if (!validation.isValid && validation.missingInfoMessage) {
+                 // Early exit: we have to wait for the user to provide the missing required parameters
+                 aiResponse = validation.missingInfoMessage;
+                 nextNodeId = null; 
+             } else if (validation.extractedData) {
+                 // Success! Save the data to pass to the sequential node (if one exists)
+                 activeExtractedData = { ...activeExtractedData, ...validation.extractedData };
+                 // Traverse to the *next* node in the visual UI linked from this Validator
+                 nextNodeId = flowEngine.findNextNodeId(graph, targetNode.id); 
+                 
+                 // If the graph literally just stops at the Validator, at least acknowledge it
+                 if (!nextNodeId) {
+                    aiResponse = `System: Evaluated Validator node perfectly, but there is no trailing node connected to generate a final response.`;
+                 }
+             }
+        } 
+        else if (nodeType === 'specialist') {
+             // Run text generation using visually defined prompt, natively injecting variables from prior Validators
+             aiResponse = await genericSpecialist.generateResponse(activeExtractedData, userName, nodeData);
+             // Execute attached Actions!
+             if (nodeData.actions && nodeData.actions.length > 0) {
+                 for (const action of nodeData.actions) {
+                     await actionRunner.executeAction(action, activeExtractedData, userName);
+                 }
+             }
+             nextNodeId = null; // Execution finishes at specialists
+        } 
+        else if (nodeType === 'generic') {
+             // Basic fallback
+             aiResponse = await genericService.generateResponse(chatHistory, userMessage, enhancedSummary, userName);
+             nextNodeId = null;
+        } else {
+             aiResponse = `System: Reached an unknown node type '${nodeType}'. Stopping execution.`;
+             nextNodeId = null;
         }
-        case 'GENERAL_INFO': {
-          aiResponse = await generalInfoService.generateResponse(chatHistory, userMessage, summary, userName);
-          break;
-        }
-        case 'APPOINTMENT': {
-          const apptValidation = await appointmentService.validateRequest(chatHistory, userMessage, summary, userName);
-          if (!apptValidation.isValid && apptValidation.missingInfoMessage) {
-            aiResponse = apptValidation.missingInfoMessage;
-          } else if (apptValidation.extractedData) {
-            aiResponse = await appointmentService.generateConfirmation(apptValidation.extractedData, userName);
-          }
-          break;
-        }
-        case 'GENERIC':
-        default:
-          aiResponse = await genericService.generateResponse(chatHistory, userMessage, summary, userName);
-          break;
      }
   }
 
-  // 6. Push state update through pipeline
-  const updatedState = await summarizerService.updateState(summary, userName, userMessage, aiResponse);
+  // 4. Summarize & Save
+  const updatedState = await summarizerService.updateState(summary, userName, language, userMessage, aiResponse);
   const newMessages: Message[] = [
     { role: 'user', content: userMessage, timestamp: new Date() },
     { role: 'assistant', content: aiResponse, timestamp: new Date() },
@@ -117,6 +136,7 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
     newMessages,
     updatedState.summary,
     updatedState.userName,
+    updatedState.language,
   );
 
   return { response: aiResponse, intent };

@@ -1,4 +1,4 @@
-import { Component, signal, computed, OnInit, output } from '@angular/core';
+import { Component, signal, computed, output } from '@angular/core';
 import { DragDropModule, CdkDragEnd } from '@angular/cdk/drag-drop';
 import { CommonModule } from '@angular/common';
 
@@ -10,11 +10,19 @@ export type NodeType =
   | 'specialist'
   | 'generic';
 
+export interface NodeAction {
+  type: 'google_calendar';
+  calendarId?: string;
+  titleTemplate?: string;
+  durationMinutes?: number;
+}
+
 export interface NodeData {
   prompt?: string;
   model?: string;
   requiredFields?: string[];
   outputLabels?: string[];
+  actions?: NodeAction[];
 }
 
 export interface WorkflowNode {
@@ -35,7 +43,6 @@ export interface WorkflowEdge {
   sourceHandle?: string;
 }
 
-const STORAGE_KEY = 'atom-graph-data';
 
 const NODE_DEFAULTS: Record<
   NodeType,
@@ -104,7 +111,7 @@ const NODE_DEFAULTS: Record<
     class: 'block w-full h-full absolute inset-0',
   },
 })
-export class NodeEditor implements OnInit {
+export class NodeEditor {
   private nextId = 7;
   snapToGrid = false;
   private readonly GRID_SIZE = 24;
@@ -158,8 +165,44 @@ export class NodeEditor implements OnInit {
     });
   });
 
-  ngOnInit() {
-    this.loadFromStorage();
+
+  // --- External Node Actions Logic ---
+  addAction(type: 'google_calendar') {
+    const node = this.selectedNode();
+    if (!node) return;
+    
+    // Ensure the data object and actions array exist
+    if (!node.data) node.data = {};
+    if (!node.data.actions) node.data.actions = [];
+
+    if (type === 'google_calendar') {
+      node.data.actions.push({
+        type: 'google_calendar',
+        calendarId: '',
+        titleTemplate: 'Appointment with {{name}}',
+        durationMinutes: 60,
+      });
+    }
+
+    // Force update signal
+    this.nodes.set([...this.nodes()]);
+  }
+
+  removeAction(index: number) {
+    const node = this.selectedNode();
+    if (node?.data?.actions) {
+      node.data.actions.splice(index, 1);
+      this.nodes.set([...this.nodes()]);
+      }
+  }
+
+  updateAction(index: number, key: string, value: any) {
+    const node = this.selectedNode();
+    if (node?.data?.actions && node.data.actions[index]) {
+      // @ts-ignore dynamic assignment
+      node.data.actions[index][key] = value;
+      this.nodes.set([...this.nodes()]);
+      }
   }
 
   onDragEnd(event: CdkDragEnd, node: WorkflowNode) {
@@ -176,7 +219,6 @@ export class NodeEditor implements OnInit {
       curr.map((n) => (n.id === node.id ? { ...n, x: newX, y: newY } : n)),
     );
     event.source._dragRef.reset();
-    this.saveToStorage();
   }
 
   onNodeClick(event: MouseEvent, node: WorkflowNode) {
@@ -218,15 +260,13 @@ export class NodeEditor implements OnInit {
           sourceHandle: source.handle,
         };
         this.edges.update((curr) => [...curr, newEdge]);
-        this.saveToStorage();
-      }
+          }
     }
     this.edgeCreationSource.set(null);
   }
 
   removeEdge(edgeId: string) {
     this.edges.update((curr) => curr.filter((e) => e.id !== edgeId));
-    this.saveToStorage();
   }
 
   // ==================== NODE MANAGEMENT ====================
@@ -260,7 +300,6 @@ export class NodeEditor implements OnInit {
       },
     };
     this.nodes.update((curr) => [...curr, newNode]);
-    this.saveToStorage();
   }
 
   removeNode(id: string) {
@@ -272,14 +311,12 @@ export class NodeEditor implements OnInit {
       this.selectedNodeId.set(null);
       this.selectedNodeChanged.emit(null);
     }
-    this.saveToStorage();
   }
 
   renameNode(id: string, newTitle: string) {
     this.nodes.update((curr) =>
       curr.map((n) => (n.id === id ? { ...n, title: newTitle } : n)),
     );
-    this.saveToStorage();
   }
 
   updateNodeData(id: string, data: Partial<NodeData>) {
@@ -288,7 +325,6 @@ export class NodeEditor implements OnInit {
         n.id === id ? { ...n, data: { ...n.data, ...data } } : n,
       ),
     );
-    this.saveToStorage();
   }
 
   exportGraph() {
@@ -315,7 +351,6 @@ export class NodeEditor implements OnInit {
     this.nextId = 1;
     this.selectedNodeId.set(null);
     this.selectedNodeChanged.emit(null);
-    this.saveToStorage();
   }
 
   getIcon(type: string) {
@@ -357,46 +392,6 @@ export class NodeEditor implements OnInit {
         return '#fb7185';
       default:
         return '#94a3b8';
-    }
-  }
-
-  // ==================== PERSISTENCE ====================
-  private saveToStorage() {
-    const data = {
-      nodes: this.nodes(),
-      edges: this.edges(),
-      nextId: this.nextId,
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-  }
-
-  private loadFromStorage() {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        if (data.nodes) {
-          // Migrate old nodes that don't have the 'data' property
-          const migratedNodes = data.nodes.map((n: any) => ({
-            ...n,
-            data:
-              n.data ||
-              (NODE_DEFAULTS[n.type as NodeType]?.data ?? { prompt: '' }),
-          }));
-          this.nodes.set(migratedNodes);
-          this.edges.set(data.edges || []);
-          
-          if (data.nodes.length > 0) {
-            this.nextId =
-              data.nextId ||
-              Math.max(...data.nodes.map((n: WorkflowNode) => parseInt(n.id, 10))) + 1;
-          } else {
-            this.nextId = data.nextId || 7;
-          }
-        }
-      } catch {
-        /* ignore corrupted data */
-      }
     }
   }
 }

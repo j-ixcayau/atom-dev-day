@@ -1,115 +1,100 @@
-# AtomWorkspace
+# Atom - No-Code Graph AI Agent Builder
+Atom is a powerful, fully customizable **drag-and-drop Visual AI Engine** designed to let anyone build complex, multi-agent AI workflows without writing a single line of backend logic. 
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+Originally conceived as an automotive sales assistant, the platform has been completely refactored into a **100% Generic Graph Execution Engine**. This means you can use the UI to build a pizza delivery bot, a technical support agent, a medical triage assistant, or anything else you can imagine, dynamically.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## 🚀 How to Run Locally from Scratch
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+This repository uses [Nx](https://nx.dev/) to manage the monorepo architecture (Angular Frontend + Node Backend).
 
-## Run tasks
+### Prerequisites
+1. **Node.js** (v18 or higher recommended)
+2. **pnpm** (Package manager, run `npm install -g pnpm`)
+3. **Firebase CLI** (`npm install -g firebase-tools`)
 
-To run the dev server for your app, use:
-
-```sh
-npx nx serve frontend
+### 1. Install Dependencies
+```bash
+pnpm install
 ```
 
-To create a production bundle:
-
-```sh
-npx nx build frontend
+### 2. Set Up Environment Variables
+In the `backend` folder, create a `.env` file with your API keys:
+```env
+# /backend/.env
+GOOGLE_GENERATIVE_AI_API_KEY="your-gemini-key"
+TELEGRAM_TOKEN="your-telegram-bot-token"
 ```
 
-To see all available targets to run for a project, run:
+### 3. Start the Frontend
+The Visual Editor is built with Angular 19. Run the development server:
+```bash
+pnpm exec nx run frontend:serve:development
+```
+Open `http://localhost:4200` in your browser.
 
-```sh
-npx nx show project frontend
+### 4. Start the Backend / Deploy
+The AI Engine runs on Firebase Cloud Functions. You can test locally using the Firebase emulator or deploy straight to the cloud.
+
+To build and deploy the Cloud Functions:
+```bash
+pnpm exec firebase deploy --only functions
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+---
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+## 🛠 How to Modify the AI (No Code Required)
 
-## Add new projects
+The core innovation of Atom is that the **backend is completely dumb**. It contains zero hardcoded prompts, schemas, or intent logic. Every single piece of behavior is driven by the graph you draw in the UI and save to the database.
 
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
+### 1. Drag & Drop Nodes
+Open the frontend flow editor. You will see several node types in the left-hand toolbox:
+* **Incoming Message**: The entry point for Telegram or the web chat.
+* **Memory**: Retrieves past conversation history from Firestore.
+* **Orchestrator**: The routing brain. It uses LLMs to classify user intent.
+* **Validator**: Extracts specific data from a user's message.
+* **Specialist**: Generates custom responses based on context and extracted data.
 
-Use the plugin's generator to create new projects.
+### 2. Configure Node Properties
+Click on any node to open the **Properties Panel** on the right side.
 
-To generate a new application, use:
+#### Dynamic Validation (The Secret Sauce)
+Instead of hardcoding what data to collect, you use the Visual UI. If you place a **Validator** node onto the canvas, you can define an array of `Required Fields` directly in the UI (e.g., `["budget", "vehicleType"]` or `["pizzaSize", "toppings"]`). 
 
-```sh
-npx nx g @nx/angular:app demo
-```
+When deployed, the backend's `GenericValidatorService` reads those fields from the database and **dynamically compiles a Zod Schema** at runtime to force the LLM to extract exactly those variables.
 
-To generate a new library, use:
+#### Custom Prompts
+You can type custom system prompts for every node in the UI. If you want the agent to be a pirate, select the Specialist node and type *"You are a pirate selling software."* The backend `GenericSpecialistService` will execute whatever was typed.
 
-```sh
-npx nx g @nx/angular:lib mylib
-```
+### 3. Connect the Edges
+Draw lines between nodes to define the execution path. The backend `main.ts` loop will literally traverse the JSON edges you drew, passing data from node to node sequentially. 
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+### 4. Attach Side Effects (Actions)
+Need the AI to book a Google Calendar meeting?
+1. Click a node.
+2. Under "Node Actions", click **Add Action -> Google Calendar**.
+3. Type your Calendar ID.
+4. When the AI execution loop reaches this node, the backend will automatically parse the config and fire the Google Calendar API trigger.
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### 5. Click Deploy
+Click the blue **Deploy** button in the top right of the UI. This compiles your visual graph into JSON and pushes it directly to Firestore under `flowConfigs/active`. The backend cloud functions instantly inherit the new brain.
 
-## Set up CI!
+---
 
-### Step 1
+## 💡 What Can You Do With This?
+Because the backend uses a dynamic traversal loop (`Generic Graph Engine`), you can create branching, looping, multi-agent systems.
 
-To connect to Nx Cloud, run the following command:
+**Example: IT Helpdesk Configuration**
+1. **Orchestrator Node**: Output Routes -> `["PASSWORD_RESET", "HARDWARE_ISSUE"]`
+2. Connect `PASSWORD_RESET` to a **Validator Node**.
+3. Require Fields: `["employeeId", "department"]`.
+4. Connect the Validator to a **Specialist Node**.
+5. Prompt: *"Tell the user we have found their ID and will send a temporary password to their manager."*
+6. Connect `HARDWARE_ISSUE` to a custom generic agent that opens Jira tickets.
 
-```sh
-npx nx connect
-```
+Zero backend code modified. Infinite use cases.
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+---
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/getting-started/tutorials/angular-monorepo-tutorial?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Licensing
-
+## ⚖️ Licensing
 This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)**. 
-
-### Why AGPL-3.0?
-The AGPL-3.0 was chosen to protect the intellectual property of this project, especially in a network/SaaS environment. 
-
-**Key provisions include:**
-- **Copyleft**: Any derivative work must also be open-sourced under the same AGPL-3.0 license.
-- **Network Interaction**: If you run a modified version of this software on a server and let the public access it over a network, you **must** make the source code of that modified version available to those users.
-- **No Monetization without Attribution/Contribution**: This prevents third parties from taking the code, making proprietary modifications, and selling it as a closed service without contributing back to the community or adhering to the license terms.
-
-For more details, see the [LICENSE](LICENSE) file.
+For more details, see the `LICENSE` file.

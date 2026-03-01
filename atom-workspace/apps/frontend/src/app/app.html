@@ -11,6 +11,16 @@
     <h1 class="text-lg font-bold tracking-tight">DevDay Atom 2026</h1>
   </div>
   <div class="flex items-center gap-2">
+    @if (user()) {
+    <button
+      (click)="logout()"
+      class="flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg bg-red-500/10 text-red-500 text-xs font-semibold hover:bg-red-500/20 transition-colors"
+      title="Logout"
+    >
+      <span class="material-symbols-outlined text-sm">logout</span>
+      <span>Logout</span>
+    </button>
+    }
     <button
       (click)="openJsonModal()"
       class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-primary/10 text-xs font-semibold hover:bg-slate-300 dark:hover:bg-primary/20 transition-colors"
@@ -36,6 +46,94 @@
 </header>
 
 <!-- Sub-navigation/Tabs -->
+@if (!authLoaded()) {
+  <div class="flex items-center justify-center h-[calc(100vh-64px)] w-full relative overflow-hidden">
+    <div class="flex flex-col items-center gap-4 relative z-10 glass-panel p-8 rounded-2xl border border-white/5">
+      <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-lg border border-white/20 animate-pulse">
+        <span class="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+      </div>
+      <p class="text-slate-400 font-mono text-sm tracking-widest uppercase">Initializing Secure Context...</p>
+    </div>
+  </div>
+} @else if (!user()) {
+  <main class="flex items-center justify-center h-[calc(100vh-64px)] w-full p-4 relative overflow-hidden bg-background-light dark:bg-background-dark/80">
+    <!-- Decorative background elements for that premium feel -->
+    <div class="absolute top-1/4 -left-32 w-[600px] h-[600px] bg-primary/20 rounded-full mix-blend-screen filter blur-[128px] opacity-70 animate-pulse"></div>
+    <div class="absolute bottom-1/4 -right-32 w-[600px] h-[600px] bg-purple-500/20 rounded-full mix-blend-screen filter blur-[128px] opacity-70 animate-pulse" style="animation-delay: 2s"></div>
+    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-sky-500/10 rounded-full mix-blend-screen filter blur-[128px] opacity-50 animate-pulse" style="animation-delay: 4s"></div>
+    
+    <div class="glass-panel p-10 rounded-3xl w-full max-w-sm relative z-10 border border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)] backdrop-blur-3xl transform transition-all">
+      <div class="flex justify-center mb-8">
+        <div class="w-20 h-20 rounded-3xl bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center text-white shadow-[0_0_40px_rgba(var(--color-primary),0.5)] border border-white/20">
+          <span class="material-symbols-outlined text-4xl">auto_awesome</span>
+        </div>
+      </div>
+      
+      <div class="text-center mb-10">
+        <h2 class="text-3xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-3">Welcome Back</h2>
+        <p class="text-sm text-slate-400">Sign in to access the Graph UI builder.</p>
+      </div>
+
+      <div class="space-y-5">
+        <div>
+          <label class="text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-widest block ml-1 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[14px]">mail</span> Email Address
+          </label>
+          <div class="relative group">
+            <input 
+              type="email" 
+              [ngModel]="loginEmail()" 
+              (ngModelChange)="loginEmail.set($event)"
+              placeholder="admin@example.com"
+              class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-slate-600 shadow-inner"
+              (keydown.enter)="login()"
+            />
+          </div>
+        </div>
+        
+        <div>
+          <label class="text-[10px] uppercase font-bold text-slate-400 mb-2 tracking-widest block ml-1 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[14px]">lock</span> Secure Password
+          </label>
+          <div class="relative group">
+            <input 
+              type="password" 
+              [ngModel]="loginPassword()" 
+              (ngModelChange)="loginPassword.set($event)"
+              placeholder="••••••••••••"
+              class="w-full bg-black/40 border border-white/10 rounded-2xl px-5 py-3.5 text-sm focus:outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/50 transition-all placeholder:text-slate-600 shadow-inner"
+              (keydown.enter)="login()"
+            />
+          </div>
+        </div>
+
+        @if (loginError()) {
+          <div class="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium animate-in fade-in slide-in-from-top-4 shadow-lg">
+            <span class="material-symbols-outlined text-[18px] shrink-0">error</span>
+            <span class="leading-relaxed">{{ loginError() }}</span>
+          </div>
+        }
+        
+        <button 
+          (click)="login()"
+          [disabled]="isLoggingIn() || !loginEmail() || !loginPassword()"
+          class="w-full h-14 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-bold px-6 rounded-2xl shadow-[0_10px_40px_-5px_rgba(var(--color-primary),0.6)] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2 mt-4 overflow-hidden relative group"
+        >
+          <!-- Shimmer effect -->
+          <div class="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
+          
+          @if (isLoggingIn()) {
+            <span class="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
+            <span class="tracking-widest uppercase text-xs">Authenticating...</span>
+          } @else {
+            <span class="tracking-widest uppercase text-xs">Secure Login</span>
+            <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          }
+        </button>
+      </div>
+    </div>
+  </main>
+} @else {
 <nav
   class="flex px-4 border-b border-slate-200 dark:border-primary/10 bg-white/50 dark:bg-background-dark/30 z-20"
 >
@@ -276,6 +374,66 @@
           </div>
         </div>
         }
+
+        <!-- Actions (Configurable Side Effects) -->
+        <div class="pt-2 border-t border-white/10">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Node Actions</label>
+            <button
+              (click)="nodeEditor.addAction('google_calendar')"
+              class="text-[10px] text-primary hover:text-white transition-colors font-bold uppercase flex items-center gap-1"
+            >
+              <span class="material-symbols-outlined text-[12px]">add</span> Add Action
+            </button>
+          </div>
+          
+          @if (!selectedNode()!.data.actions || selectedNode()!.data.actions?.length === 0) {
+            <p class="text-[10px] text-slate-500 italic">No external actions configured.</p>
+          }
+
+          <div class="space-y-3">
+            @for (action of selectedNode()!.data.actions; track $index) {
+              <div class="bg-black/20 border border-white/5 rounded-lg p-3 relative group">
+                <button
+                  (click)="nodeEditor.removeAction($index)"
+                  class="absolute top-2 right-2 text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                >
+                  <span class="material-symbols-outlined text-[14px]">close</span>
+                </button>
+                
+                @if (action.type === 'google_calendar') {
+                  <div class="flex items-center gap-2 mb-2">
+                    <span class="material-symbols-outlined text-emerald-400 text-[14px]">event</span>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Google Calendar</span>
+                  </div>
+                  
+                  <div class="space-y-2">
+                    <div>
+                      <label class="text-[9px] text-slate-500 uppercase font-bold block mb-0.5">Calendar ID</label>
+                      <input 
+                        type="text" 
+                        [ngModel]="action.calendarId" 
+                        (ngModelChange)="nodeEditor.updateAction($index, 'calendarId', $event)" 
+                        placeholder="e.g. sales@dealership.com"
+                        class="w-full bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:border-primary/50 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label class="text-[9px] text-slate-500 uppercase font-bold block mb-0.5">Event Title Template</label>
+                      <input 
+                        type="text" 
+                        [ngModel]="action.titleTemplate" 
+                        (ngModelChange)="nodeEditor.updateAction($index, 'titleTemplate', $event)" 
+                        [placeholder]="'e.g. Appointment for {{ ' + 'name }}'"
+                        class="w-full bg-black/40 border border-white/10 rounded-md px-2 py-1.5 text-xs focus:outline-none focus:border-primary/50 transition-colors"
+                      />
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
 
         <!-- Node ID -->
         <div>
@@ -527,7 +685,7 @@
             >progress_activity</span
           >
           <span class="text-xs text-slate-400"
-            >Processing through AI pipeline...</span
+            >{{ chatLoadingText() }}</span
           >
         </div>
       </div>
@@ -697,7 +855,7 @@
           <div>
             <p class="font-bold text-sm">Graph Persistence</p>
             <p class="text-xs text-slate-400">
-              Stored in browser localStorage + Firestore
+              Stored in Firestore
             </p>
           </div>
           <span
@@ -955,6 +1113,7 @@
     </div>
   </div>
 </div>
+}
 }
 
 <!-- ==================== TOAST NOTIFICATION ==================== -->

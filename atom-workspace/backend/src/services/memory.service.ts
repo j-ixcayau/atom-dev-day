@@ -38,7 +38,7 @@ export class MemoryService {
       const doc = await docRef.get();
 
       if (!doc.exists) {
-        return { messages: [], summary: '', userName: null };
+        return { messages: [], summary: '', userName: null, language: null };
       }
 
       const data = doc.data();

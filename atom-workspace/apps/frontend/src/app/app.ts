@@ -11,8 +11,9 @@ import {
 import { RouterModule } from '@angular/router';
 import { UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Firestore, doc, docData, setDoc, serverTimestamp } from '@angular/fire/firestore';
-import { firstValueFrom } from 'rxjs';
+import { Firestore, doc, docData, setDoc, serverTimestamp, collection, query, orderBy, collectionData, writeBatch, getDocs } from '@angular/fire/firestore';
+import { Auth, user, signInWithEmailAndPassword, signOut } from '@angular/fire/auth';
+import { firstValueFrom, Subscription } from 'rxjs';
 import {
   NodeEditor,
   WorkflowNode,
@@ -49,7 +50,22 @@ export class App implements OnInit, AfterViewInit {
   @ViewChild(NodeEditor) nodeEditor!: NodeEditor;
 
   private firestore = inject(Firestore);
+  private auth = inject(Auth);
   private cdr = inject(ChangeDetectorRef);
+
+  // Auth state
+  user = signal<any | null>(null);
+  authLoaded = signal(false);
+  
+  // Login flow
+  loginEmail = signal('');
+  loginPassword = signal('');
+  loginError = signal('');
+  isLoggingIn = signal(false);
+
+  private authSubscription?: Subscription;
+  private deploymentsSub?: Subscription;
+  private chatSub?: Subscription;
 
   // Navigation state
   activeTopTab = signal<'flow-editor' | 'deployments'>('flow-editor');
@@ -63,14 +79,14 @@ export class App implements OnInit, AfterViewInit {
   toastMessage = signal('');
   toastIcon = signal('check_circle');
 
-  // Settings (persisted in localStorage)
+  // Settings
   snapToGrid = signal(false);
   showGrid = signal(true);
 
   // JSON export
   jsonOutput = signal('');
 
-  // Deployment history (persisted in localStorage)
+  // Deployment history (from Firestore)
   deployments = signal<DeploymentRecord[]>([]);
 
   // Deploy state
@@ -85,6 +101,25 @@ export class App implements OnInit, AfterViewInit {
   chatMessages = signal<ChatMessage[]>([]);
   chatInput = signal('');
   isChatLoading = signal(false);
+  chatLoadingText = signal('Thinking...');
+  private loadingTextInterval: ReturnType<typeof setInterval> | null = null;
+
+  private readonly loadingTexts = [
+    'Thinking...',
+    'Reading your message...',
+    'Retrieving memory...',
+    'Classifying intent...',
+    'Running orchestrator...',
+    'Consulting the AI brain...',
+    'Validating request...',
+    'Searching knowledge base...',
+    'Generating response...',
+    'Almost there...',
+    'Crafting the perfect reply...',
+    'Connecting the dots...',
+    'Processing through pipeline...',
+    'Warming up neurons...',
+  ];
 
   private readonly WEBCHAT_URL =
     'https://us-central1-atom-dev-day.cloudfunctions.net/webChat';
@@ -132,72 +167,100 @@ export class App implements OnInit, AfterViewInit {
   ];
 
   constructor() {
-    // Persist settings
-    effect(() => {
-      localStorage.setItem(
-        'atom-snap-to-grid',
-        JSON.stringify(this.snapToGrid()),
-      );
-    });
-
-    effect(() => {
-      localStorage.setItem('atom-show-grid', JSON.stringify(this.showGrid()));
+    // Track Auth State
+    this.authSubscription = user(this.auth).subscribe((u: any) => {
+      this.user.set(u);
+      this.authLoaded.set(true);
+      if (u) {
+        // Only load the DB graph once user is authenticated
+        this.loadRemoteGraph();
+        this.setupSubscriptions();
+      } else {
+        this.clearSubscriptions();
+      }
     });
   }
 
-  async ngOnInit() {
-    // Restore settings from localStorage
-    const snapToGrid = localStorage.getItem('atom-snap-to-grid');
-    if (snapToGrid !== null) this.snapToGrid.set(JSON.parse(snapToGrid));
+  private setupSubscriptions() {
+    const depsQuery = query(collection(this.firestore, 'deployments'), orderBy('timestamp', 'desc'));
+    // @ts-ignore
+    this.deploymentsSub = collectionData(depsQuery, { idField: 'id' }).subscribe((data: any[]) => {
+      this.deployments.set(
+        data.map(d => ({
+          ...d,
+          timestamp: d.timestamp?.toDate ? d.timestamp.toDate() : new Date(d.timestamp)
+        }))
+      );
+    });
 
-    const showGrid = localStorage.getItem('atom-show-grid');
-    if (showGrid !== null) this.showGrid.set(JSON.parse(showGrid));
+    const chatQuery = query(collection(this.firestore, 'sessions/web-test-session/messages'), orderBy('timestamp', 'asc'));
+    // @ts-ignore
+    this.chatSub = collectionData(chatQuery, { idField: 'id' }).subscribe((data: any[]) => {
+      this.chatMessages.set(
+        data.map(m => ({
+          ...m,
+          timestamp: m.timestamp?.toDate ? m.timestamp.toDate() : new Date(m.timestamp)
+        }))
+      );
+    });
+  }
 
-    // Restore deployment history
-    const deployments = localStorage.getItem('atom-deployments');
-    if (deployments) {
-      try {
-        const parsed = JSON.parse(deployments);
-        this.deployments.set(
-          parsed.map((d: DeploymentRecord) => ({
-            ...d,
-            timestamp: new Date(d.timestamp),
-          })),
-        );
-      } catch {
-        /* ignore corrupted data */
-      }
+  private clearSubscriptions() {
+    if (this.deploymentsSub) this.deploymentsSub.unsubscribe();
+    if (this.chatSub) this.chatSub.unsubscribe();
+  }
+
+  async login() {
+    this.loginError.set('');
+    this.isLoggingIn.set(true);
+    try {
+      await signInWithEmailAndPassword(this.auth, this.loginEmail(), this.loginPassword());
+      this.showNotification('✅ Login successful', 'check_circle');
+    } catch (e: any) {
+      this.loginError.set(e.message || 'Login failed');
+      this.showNotification('❌ Login failed', 'error');
     }
+    this.isLoggingIn.set(false);
+  }
 
-    // Restore chat history
-    const chat = localStorage.getItem('atom-chat-messages');
-    if (chat) {
-      try {
-        const parsed = JSON.parse(chat);
-        this.chatMessages.set(
-          parsed.map((m: ChatMessage) => ({
-            ...m,
-            timestamp: new Date(m.timestamp),
-          })),
-        );
-      } catch {
-        /* ignore corrupted data */
-      }
-    }
-    
-    // Attempt to load the live graph layout directly from the Database natively
+  async logout() {
+    await signOut(this.auth);
+    this.loginEmail.set('');
+    this.loginPassword.set('');
+    this.showNotification('👋 Logged out successfully', 'info');
+  }
+
+  async loadRemoteGraph() {
     try {
       const activeFlowDoc = doc(this.firestore, 'flowConfigs/active');
       const data: any = await firstValueFrom(docData(activeFlowDoc));
 
       if (data && data.graph) {
-         // If valid graph payload, instruct the node editor to display it, overriding whatever localStorage had
          setTimeout(() => {
             if (this.nodeEditor && data.graph.nodes) {
-               this.nodeEditor.nodes.set(data.graph.nodes);
-               this.nodeEditor.edges.set(data.graph.edges || []);
-               if (data.graph.nodes.length > 0) {
-                 this.nodeEditor['nextId'] = Math.max(...data.graph.nodes.map((n: WorkflowNode) => parseInt(n.id, 10))) + 1;
+               const rehydratedNodes = data.graph.nodes.map((n: any) => ({
+                 id: n.id,
+                 type: n.type,
+                 title: n.title,
+                 x: n.position?.x || 0,
+                 y: n.position?.y || 0,
+                 width: n.type === 'orchestrator' ? 260 : 220,
+                 height: 80,
+                 data: n.data || {},
+               }));
+
+               const rehydratedEdges = (data.graph.edges || []).map((e: any) => ({
+                 id: e.id,
+                 sourceId: e.source || e.sourceId,
+                 targetId: e.target || e.targetId,
+                 sourceHandle: e.sourceHandle,
+               }));
+
+               this.nodeEditor.nodes.set(rehydratedNodes);
+               this.nodeEditor.edges.set(rehydratedEdges);
+
+               if (rehydratedNodes.length > 0) {
+                 this.nodeEditor['nextId'] = Math.max(...rehydratedNodes.map((n: WorkflowNode) => parseInt(n.id, 10))) + 1;
                }
             }
          }, 100);
@@ -205,6 +268,15 @@ export class App implements OnInit, AfterViewInit {
     } catch (e) {
       console.warn('Failed to fetch remote DB graph on init:', e);
     }
+  }
+
+  async ngOnInit() {}
+
+  ngOnDestroy() {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
+    this.clearSubscriptions();
   }
 
   ngAfterViewInit() {
@@ -269,28 +341,8 @@ export class App implements OnInit, AfterViewInit {
 
     const graph = this.nodeEditor.exportGraph();
 
-    // Record the deployment
-    const deployment: DeploymentRecord = {
-      id: `deploy-${Date.now()}`,
-      name: `Deploy #${this.deployments().length + 1}`,
-      description: `${graph.nodes.length} nodes, ${graph.edges.length} edges`,
-      timestamp: new Date(),
-      status: 'live',
-      graphSnapshot: graph,
-    };
-
-    // Mark previous deployments as replaced
-    const updatedHistory = this.deployments().map((d) => ({
-      ...d,
-      status: 'replaced' as const,
-    }));
-
-    const newHistory = [deployment, ...updatedHistory];
-    this.deployments.set(newHistory);
-    this.persistDeployments();
-
-    // Save graph to localStorage as the "deployed" version
-    localStorage.setItem('atom-deployed-graph', JSON.stringify(graph));
+    // Generate deployment ID
+    const deploymentId = `deploy-${Date.now()}`;
 
     // Send to Firebase DB Directly
     try {
@@ -311,6 +363,17 @@ export class App implements OnInit, AfterViewInit {
       
       const sanitizedGraph = sanitizeForFirestore(graph);
 
+      // Save to deployments collection
+      const newDeploymentDoc = doc(this.firestore, `deployments/${deploymentId}`);
+      await setDoc(newDeploymentDoc, {
+        name: `Deploy #${this.deployments().length + 1}`,
+        description: `${graph.nodes.length} nodes, ${graph.edges.length} edges`,
+        timestamp: serverTimestamp(),
+        status: 'live',
+        graphSnapshot: sanitizedGraph,
+      });
+
+      // Update active flow config
       const activeFlowDoc = doc(this.firestore, 'flowConfigs/active');
       await setDoc(activeFlowDoc, {
          graph: sanitizedGraph,
@@ -345,7 +408,7 @@ export class App implements OnInit, AfterViewInit {
     this.chatMessages.update((curr) => [...curr, userMsg]);
     this.chatInput.set('');
     this.isChatLoading.set(true);
-    this.persistChat();
+    this.startLoadingTextRotation();
 
     try {
       const response = await fetch(this.WEBCHAT_URL, {
@@ -383,14 +446,28 @@ export class App implements OnInit, AfterViewInit {
       this.chatMessages.update((curr) => [...curr, assistantMsg]);
     }
 
+    this.stopLoadingTextRotation();
     this.isChatLoading.set(false);
-    this.persistChat();
   }
 
-  clearChat() {
-    this.chatMessages.set([]);
-    localStorage.removeItem('atom-chat-messages');
-    this.showNotification('🗑 Chat history cleared', 'delete_sweep');
+  async clearChat() {
+    this.showNotification('🗑 Clearing chat history...', 'delete_sweep');
+    try {
+      const msgsRef = collection(this.firestore, 'sessions/web-test-session/messages');
+      const snapshot = await getDocs(query(msgsRef));
+      const batch = writeBatch(this.firestore);
+      snapshot.docs.forEach(d => batch.delete(d.ref));
+      
+      // Also clear the session doc itself to remove summary
+      batch.delete(doc(this.firestore, 'sessions/web-test-session'));
+      
+      await batch.commit();
+      this.chatMessages.set([]);
+      this.showNotification('✅ Chat history cleared', 'check_circle');
+    } catch (e) {
+      console.error('Clear chat error:', e);
+      this.showNotification('❌ Failed to clear chat', 'error');
+    }
   }
 
   onChatKeydown(event: KeyboardEvent) {
@@ -433,10 +510,20 @@ export class App implements OnInit, AfterViewInit {
     this.showGrid.set(!this.showGrid());
   }
 
-  clearDeployments() {
-    this.deployments.set([]);
-    this.persistDeployments();
-    this.showNotification('🗑 Deployment history cleared', 'delete_sweep');
+  async clearDeployments() {
+    this.showNotification('🗑 Clearing deployments...', 'delete_sweep');
+    try {
+      const depsRef = collection(this.firestore, 'deployments');
+      const snapshot = await getDocs(query(depsRef));
+      const batch = writeBatch(this.firestore);
+      snapshot.docs.forEach(d => batch.delete(d.ref));
+      await batch.commit();
+      this.deployments.set([]);
+      this.showNotification('✅ Deployments cleared', 'check_circle');
+    } catch (e) {
+      console.error('Clear deployments error:', e);
+      this.showNotification('❌ Failed to clear deployments', 'error');
+    }
   }
 
   // ==================== DEPLOYMENT DETAIL ====================
@@ -465,18 +552,20 @@ export class App implements OnInit, AfterViewInit {
     setTimeout(() => this.showToast.set(false), 3000);
   }
 
-  // ==================== PERSISTENCE ====================
-  private persistDeployments() {
-    localStorage.setItem(
-      'atom-deployments',
-      JSON.stringify(this.deployments()),
-    );
+  // ==================== LOADING TEXT ROTATION ====================
+  private startLoadingTextRotation() {
+    this.chatLoadingText.set(this.loadingTexts[0]);
+    let index = 0;
+    this.loadingTextInterval = setInterval(() => {
+      index = (index + 1) % this.loadingTexts.length;
+      this.chatLoadingText.set(this.loadingTexts[index]);
+    }, 1000);
   }
 
-  private persistChat() {
-    localStorage.setItem(
-      'atom-chat-messages',
-      JSON.stringify(this.chatMessages()),
-    );
+  private stopLoadingTextRotation() {
+    if (this.loadingTextInterval) {
+      clearInterval(this.loadingTextInterval);
+      this.loadingTextInterval = null;
+    }
   }
 }

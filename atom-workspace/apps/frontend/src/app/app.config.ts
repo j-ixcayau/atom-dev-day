@@ -6,6 +6,7 @@ import { provideRouter } from '@angular/router';
 import { appRoutes } from './app.routes';
 import { initializeApp, provideFirebaseApp } from '@angular/fire/app';
 import { getFirestore, provideFirestore } from '@angular/fire/firestore';
+import { getAuth, provideAuth } from '@angular/fire/auth';
 
 const firebaseConfig = {
   projectId: "atom-dev-day",
@@ -22,6 +23,11 @@ export const appConfig: ApplicationConfig = {
      provideBrowserGlobalErrorListeners(),
      provideRouter(appRoutes),
      provideFirebaseApp(() => initializeApp(firebaseConfig)),
-     provideFirestore(() => getFirestore()),
+     provideAuth(() => getAuth()),
+     // Specify the default database ID explicitly with the app instance to resolve strictly-routed CORS checks on the client SDK
+     provideFirestore(() => {
+        const app = initializeApp(firebaseConfig);
+        return getFirestore(app, '(default)');
+     }),
   ],
 };
