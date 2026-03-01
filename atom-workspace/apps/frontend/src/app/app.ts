@@ -11,7 +11,8 @@ import {
 import { RouterModule } from '@angular/router';
 import { UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { Firestore, doc, docData, setDoc, serverTimestamp } from '@angular/fire/firestore';
+import { firstValueFrom } from 'rxjs';
 import {
   NodeEditor,
   WorkflowNode,
@@ -37,7 +38,6 @@ export interface ChatMessage {
   imports: [
     RouterModule,
     UpperCasePipe,
-    HttpClientModule,
     FormsModule,
     NodeEditor,
   ],
@@ -48,7 +48,7 @@ export interface ChatMessage {
 export class App implements OnInit, AfterViewInit {
   @ViewChild(NodeEditor) nodeEditor!: NodeEditor;
 
-  private http = inject(HttpClient);
+  private firestore = inject(Firestore);
   private cdr = inject(ChangeDetectorRef);
 
   // Navigation state
@@ -86,9 +86,6 @@ export class App implements OnInit, AfterViewInit {
   chatInput = signal('');
   isChatLoading = signal(false);
 
-  // Firebase endpoints
-  private readonly SAVE_CONFIG_URL =
-    'https://saveflowconfig-gcfb7e7ryq-uc.a.run.app';
   private readonly WEBCHAT_URL =
     'https://us-central1-atom-dev-day.cloudfunctions.net/webChat';
 
@@ -148,7 +145,7 @@ export class App implements OnInit, AfterViewInit {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     // Restore settings from localStorage
     const snapToGrid = localStorage.getItem('atom-snap-to-grid');
     if (snapToGrid !== null) this.snapToGrid.set(JSON.parse(snapToGrid));
@@ -186,6 +183,27 @@ export class App implements OnInit, AfterViewInit {
       } catch {
         /* ignore corrupted data */
       }
+    }
+    
+    // Attempt to load the live graph layout directly from the Database natively
+    try {
+      const activeFlowDoc = doc(this.firestore, 'flowConfigs/active');
+      const data: any = await firstValueFrom(docData(activeFlowDoc));
+
+      if (data && data.graph) {
+         // If valid graph payload, instruct the node editor to display it, overriding whatever localStorage had
+         setTimeout(() => {
+            if (this.nodeEditor && data.graph.nodes) {
+               this.nodeEditor.nodes.set(data.graph.nodes);
+               this.nodeEditor.edges.set(data.graph.edges || []);
+               if (data.graph.nodes.length > 0) {
+                 this.nodeEditor['nextId'] = Math.max(...data.graph.nodes.map((n: WorkflowNode) => parseInt(n.id, 10))) + 1;
+               }
+            }
+         }, 100);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch remote DB graph on init:', e);
     }
   }
 
@@ -274,26 +292,39 @@ export class App implements OnInit, AfterViewInit {
     // Save graph to localStorage as the "deployed" version
     localStorage.setItem('atom-deployed-graph', JSON.stringify(graph));
 
-    // Send to Firebase saveFlowConfig endpoint
+    // Send to Firebase DB Directly
     try {
-      const response = await fetch(this.SAVE_CONFIG_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ graph }),
+      // Firebase throws "Unsupported field value: undefined" if any property is undefined.
+      // We deep clone and strictly remove any potential undefined values.
+      const sanitizeForFirestore = (obj: any): any => {
+        if (obj === undefined) return null;
+        if (obj === null || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) return obj.map(sanitizeForFirestore);
+        const newObj: any = {};
+        for (const key of Object.keys(obj)) {
+          if (obj[key] !== undefined) {
+             newObj[key] = sanitizeForFirestore(obj[key]);
+          }
+        }
+        return newObj;
+      };
+      
+      const sanitizedGraph = sanitizeForFirestore(graph);
+
+      const activeFlowDoc = doc(this.firestore, 'flowConfigs/active');
+      await setDoc(activeFlowDoc, {
+         graph: sanitizedGraph,
+         updatedAt: serverTimestamp(),
+         nodeCount: sanitizedGraph.nodes?.length || 0,
+         edgeCount: sanitizedGraph.edges?.length || 0,
       });
 
-      if (response.ok) {
-        this.showNotification('✅ Flow deployed to Firestore!', 'check_circle');
-      } else {
-        this.showNotification(
-          '✅ Flow saved locally! (Firestore: ' + response.status + ')',
-          'cloud_done',
-        );
-      }
-    } catch {
+      this.showNotification('✅ Flow deployed directly to Database!', 'check_circle');
+    } catch (err: any) {
+      console.error('Firestore setDoc failed:', err);
       this.showNotification(
-        '✅ Flow config saved locally! (endpoint offline)',
-        'cloud_done',
+        '❌ DB Error: ' + (err.message || 'Unknown error'),
+        'error',
       );
     }
 

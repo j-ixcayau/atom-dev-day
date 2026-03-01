@@ -115,76 +115,8 @@ export class NodeEditor implements OnInit {
   // Selection emitter for properties panel
   selectedNodeChanged = output<WorkflowNode | null>();
 
-  nodes = signal<WorkflowNode[]>([
-    {
-      id: '1',
-      type: 'incoming',
-      title: 'Incoming Message',
-      x: 60,
-      y: 350,
-      width: 220,
-      height: 80,
-      data: { ...NODE_DEFAULTS.incoming.data },
-    },
-    {
-      id: '2',
-      type: 'memory',
-      title: 'Memory Retrieval',
-      x: 340,
-      y: 350,
-      width: 220,
-      height: 80,
-      data: { ...NODE_DEFAULTS.memory.data },
-    },
-    {
-      id: '3',
-      type: 'orchestrator',
-      title: 'Orchestrator Agent',
-      x: 620,
-      y: 350,
-      width: 260,
-      height: 80,
-      data: { ...NODE_DEFAULTS.orchestrator.data },
-    },
-    {
-      id: '4',
-      type: 'validator',
-      title: 'Catalog Validator',
-      x: 980,
-      y: 150,
-      width: 220,
-      height: 80,
-      data: { ...NODE_DEFAULTS.validator.data },
-    },
-    {
-      id: '5',
-      type: 'specialist',
-      title: 'Car Specialist',
-      x: 1260,
-      y: 150,
-      width: 220,
-      height: 80,
-      data: { ...NODE_DEFAULTS.specialist.data },
-    },
-    {
-      id: '6',
-      type: 'generic',
-      title: 'Generic Agent',
-      x: 980,
-      y: 550,
-      width: 220,
-      height: 80,
-      data: { ...NODE_DEFAULTS.generic.data },
-    },
-  ]);
-
-  edges = signal<WorkflowEdge[]>([
-    { id: 'e1-2', sourceId: '1', targetId: '2' },
-    { id: 'e2-3', sourceId: '2', targetId: '3' },
-    { id: 'e3-4', sourceId: '3', targetId: '4', sourceHandle: 'CATALOG' },
-    { id: 'e4-5', sourceId: '4', targetId: '5' },
-    { id: 'e3-6', sourceId: '3', targetId: '6', sourceHandle: 'GENERIC' },
-  ]);
+  nodes = signal<WorkflowNode[]>([]);
+  edges = signal<WorkflowEdge[]>([]);
 
   selectedNodeId = signal<string | null>(null);
 
@@ -378,76 +310,9 @@ export class NodeEditor implements OnInit {
   }
 
   resetGraph() {
-    this.nodes.set([
-      {
-        id: '1',
-        type: 'incoming',
-        title: 'Incoming Message',
-        x: 60,
-        y: 350,
-        width: 220,
-        height: 80,
-        data: { ...NODE_DEFAULTS.incoming.data },
-      },
-      {
-        id: '2',
-        type: 'memory',
-        title: 'Memory Retrieval',
-        x: 340,
-        y: 350,
-        width: 220,
-        height: 80,
-        data: { ...NODE_DEFAULTS.memory.data },
-      },
-      {
-        id: '3',
-        type: 'orchestrator',
-        title: 'Orchestrator Agent',
-        x: 620,
-        y: 350,
-        width: 260,
-        height: 80,
-        data: { ...NODE_DEFAULTS.orchestrator.data },
-      },
-      {
-        id: '4',
-        type: 'validator',
-        title: 'Catalog Validator',
-        x: 980,
-        y: 150,
-        width: 220,
-        height: 80,
-        data: { ...NODE_DEFAULTS.validator.data },
-      },
-      {
-        id: '5',
-        type: 'specialist',
-        title: 'Car Specialist',
-        x: 1260,
-        y: 150,
-        width: 220,
-        height: 80,
-        data: { ...NODE_DEFAULTS.specialist.data },
-      },
-      {
-        id: '6',
-        type: 'generic',
-        title: 'Generic Agent',
-        x: 980,
-        y: 550,
-        width: 220,
-        height: 80,
-        data: { ...NODE_DEFAULTS.generic.data },
-      },
-    ]);
-    this.edges.set([
-      { id: 'e1-2', sourceId: '1', targetId: '2' },
-      { id: 'e2-3', sourceId: '2', targetId: '3' },
-      { id: 'e3-4', sourceId: '3', targetId: '4', sourceHandle: 'CATALOG' },
-      { id: 'e4-5', sourceId: '4', targetId: '5' },
-      { id: 'e3-6', sourceId: '3', targetId: '6', sourceHandle: 'GENERIC' },
-    ]);
-    this.nextId = 7;
+    this.nodes.set([]);
+    this.edges.set([]);
+    this.nextId = 1;
     this.selectedNodeId.set(null);
     this.selectedNodeChanged.emit(null);
     this.saveToStorage();
@@ -510,7 +375,7 @@ export class NodeEditor implements OnInit {
     if (stored) {
       try {
         const data = JSON.parse(stored);
-        if (data.nodes?.length > 0) {
+        if (data.nodes) {
           // Migrate old nodes that don't have the 'data' property
           const migratedNodes = data.nodes.map((n: any) => ({
             ...n,
@@ -520,11 +385,14 @@ export class NodeEditor implements OnInit {
           }));
           this.nodes.set(migratedNodes);
           this.edges.set(data.edges || []);
-          this.nextId =
-            data.nextId ||
-            Math.max(
-              ...data.nodes.map((n: WorkflowNode) => parseInt(n.id, 10)),
-            ) + 1;
+          
+          if (data.nodes.length > 0) {
+            this.nextId =
+              data.nextId ||
+              Math.max(...data.nodes.map((n: WorkflowNode) => parseInt(n.id, 10))) + 1;
+          } else {
+            this.nextId = data.nextId || 7;
+          }
         }
       } catch {
         /* ignore corrupted data */

@@ -10,6 +10,7 @@ import { AppointmentService } from './services/appointment.service';
 import { MemoryService, Message } from './services/memory.service';
 import { SummarizerService } from './services/summarizer.service';
 import { GenericService } from './services/generic.service';
+import { FlowEngineService, FlowGraph } from './services/flow-engine.service';
 
 // Initialize Firebase Admin (if not already initialized by MemoryService)
 if (admin.apps.length === 0) {
@@ -25,6 +26,7 @@ const appointmentService = new AppointmentService();
 const memoryService = new MemoryService();
 const summarizerService = new SummarizerService();
 const genericService = new GenericService();
+const flowEngine = new FlowEngineService();
 
 /**
  * Configure the Telegram bot.
@@ -35,53 +37,93 @@ const TELEGRAM_TOKEN =
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 
 /**
- * Save Flow Configuration Endpoint
- * The frontend "Deploy" button POSTs the graph JSON here.
- * It's stored in Firestore under flowConfigs/active.
+ * Shared Dynamic Flow Execution Helper
  */
-export const saveFlowConfig = functions.https.onRequest(
-  async (request, response) => {
-    // CORS headers
-    response.set('Access-Control-Allow-Origin', '*');
-    response.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.set('Access-Control-Allow-Headers', 'Content-Type');
+async function processMessage(sessionId: string, userMessage: string): Promise<{ response: string; intent: string }> {
+  // 1. Fetch memory
+  const { messages: chatHistory, summary, userName } = await memoryService.getSessionData(sessionId);
 
-    if (request.method === 'OPTIONS') {
-      response.status(204).send('');
-      return;
+  // 2. Load Active Flow Configuration
+  let graph: FlowGraph | null = null;
+  try {
+    const activeFlowDoc = await db.collection('flowConfigs').doc('active').get();
+    if (activeFlowDoc.exists) {
+      graph = activeFlowDoc.data()?.graph as FlowGraph;
     }
+  } catch (e) {
+    console.warn('Could not load flow config:', e);
+  }
 
-    try {
-      const { graph } = request.body;
+  if (!graph || !graph.nodes || !graph.edges) {
+     return { response: "System: No dynamic flow configuration found in Firestore. Please 'Deploy' from the visual editor first.", intent: "NONE" };
+  }
 
-      if (!graph) {
-        response.status(400).json({ error: 'Missing graph payload' });
-        return;
-      }
+  // 3. Find Orchestrator Node
+  const orchestratorNode = flowEngine.findNodeByType(graph, 'orchestrator');
+  if (!orchestratorNode) {
+     return { response: "System: Flow configuration error. Missing Orchestrator Node. Please add it to the graph.", intent: "NONE" };
+  }
 
-      await db
-        .collection('flowConfigs')
-        .doc('active')
-        .set({
-          graph,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-          nodeCount: graph.nodes?.length || 0,
-          edgeCount: graph.edges?.length || 0,
-        });
+  // 4. Classify Intent Dynamically using the node's configured prompt and labels
+  const intent = await orchestrator.classifyIntent(summary, userName, userMessage, orchestratorNode.data);
+  
+  // 5. Evaluate Topology: Find if a path exists for this label
+  const nextNodeId = flowEngine.findNextNodeId(graph, orchestratorNode.id, intent);
+  let aiResponse = '';
 
-      response
-        .status(200)
-        .json({ success: true, message: 'Flow config saved to Firestore' });
-    } catch (error) {
-      console.error('Error saving flow config:', error);
-      response.status(500).json({ error: 'Failed to save flow config' });
-    }
-  },
-);
+  if (!nextNodeId) {
+     // The edge does not exist in the visual editor for this intent!
+     aiResponse = `System: The Orchestrator classified this as '${intent}', but there is no edge connected to the output handle '${intent}' in the visual editor. Please connect this path and Deploy.`;
+  } else {
+     // A valid edge exists, route to the robust specialized service logic
+     switch (intent) {
+        case 'CATALOG': {
+          const validation = await catalogSpecialist.validateRequest(chatHistory, userMessage, summary, userName);
+          if (!validation.isValid && validation.missingInfoMessage) {
+            aiResponse = validation.missingInfoMessage;
+          } else if (validation.extractedData) {
+            aiResponse = await catalogSpecialist.generateResponse(validation.extractedData, userName);
+          }
+          break;
+        }
+        case 'GENERAL_INFO': {
+          aiResponse = await generalInfoService.generateResponse(chatHistory, userMessage, summary, userName);
+          break;
+        }
+        case 'APPOINTMENT': {
+          const apptValidation = await appointmentService.validateRequest(chatHistory, userMessage, summary, userName);
+          if (!apptValidation.isValid && apptValidation.missingInfoMessage) {
+            aiResponse = apptValidation.missingInfoMessage;
+          } else if (apptValidation.extractedData) {
+            aiResponse = await appointmentService.generateConfirmation(apptValidation.extractedData, userName);
+          }
+          break;
+        }
+        case 'GENERIC':
+        default:
+          aiResponse = await genericService.generateResponse(chatHistory, userMessage, summary, userName);
+          break;
+     }
+  }
+
+  // 6. Push state update through pipeline
+  const updatedState = await summarizerService.updateState(summary, userName, userMessage, aiResponse);
+  const newMessages: Message[] = [
+    { role: 'user', content: userMessage, timestamp: new Date() },
+    { role: 'assistant', content: aiResponse, timestamp: new Date() },
+  ];
+  await memoryService.updateSessionData(
+    sessionId,
+    newMessages,
+    updatedState.summary,
+    updatedState.userName,
+  );
+
+  return { response: aiResponse, intent };
+}
 
 /**
  * Web Chat Endpoint — for the in-app chat tester.
- * Unlike the Telegram webhook, this returns the AI response directly.
  */
 export const webChat = functions.https.onRequest(async (request, response) => {
   // CORS headers
@@ -103,100 +145,14 @@ export const webChat = functions.https.onRequest(async (request, response) => {
     }
 
     const chatSessionId = sessionId || `web-${Date.now()}`;
-
-    // 1. Memory Node: Retrieve context
-    const {
-      messages: chatHistory,
-      summary,
-      userName,
-    } = await memoryService.getSessionData(chatSessionId);
-
-    // 2. Orchestrator Node: Classify Intent
-    const intent = await orchestrator.classifyIntent(
-      summary,
-      userName,
-      message,
-    );
-
-    let aiResponse = '';
-
-    switch (intent) {
-      case 'CATALOG': {
-        const validation = await catalogSpecialist.validateRequest(
-          chatHistory,
-          message,
-          summary,
-          userName,
-        );
-        if (!validation.isValid && validation.missingInfoMessage) {
-          aiResponse = validation.missingInfoMessage;
-        } else if (validation.extractedData) {
-          aiResponse = await catalogSpecialist.generateResponse(
-            validation.extractedData,
-            userName,
-          );
-        }
-        break;
-      }
-      case 'GENERAL_INFO': {
-        aiResponse = await generalInfoService.generateResponse(
-          chatHistory,
-          message,
-          summary,
-          userName,
-        );
-        break;
-      }
-      case 'APPOINTMENT': {
-        const apptValidation = await appointmentService.validateRequest(
-          chatHistory,
-          message,
-          summary,
-          userName,
-        );
-        if (!apptValidation.isValid && apptValidation.missingInfoMessage) {
-          aiResponse = apptValidation.missingInfoMessage;
-        } else if (apptValidation.extractedData) {
-          aiResponse = await appointmentService.generateConfirmation(
-            apptValidation.extractedData,
-            userName,
-          );
-        }
-        break;
-      }
-      case 'GENERIC':
-      default:
-        aiResponse = await genericService.generateResponse(
-          chatHistory,
-          message,
-          summary,
-          userName,
-        );
-        break;
-    }
-
-    // Save to memory
-    const updatedState = await summarizerService.updateState(
-      summary,
-      userName,
-      message,
-      aiResponse,
-    );
-    const newMessages: Message[] = [
-      { role: 'user', content: message, timestamp: new Date() },
-      { role: 'assistant', content: aiResponse, timestamp: new Date() },
-    ];
-    await memoryService.updateSessionData(
-      chatSessionId,
-      newMessages,
-      updatedState.summary,
-      updatedState.userName,
-    );
+    
+    // Execute dynamic pipeline
+    const result = await processMessage(chatSessionId, message);
 
     // Return the AI response directly to the frontend
     response
       .status(200)
-      .json({ response: aiResponse, intent, sessionId: chatSessionId });
+      .json({ response: result.response, intent: result.intent, sessionId: chatSessionId });
   } catch (error) {
     console.error('Error in web chat:', error);
     response
@@ -228,117 +184,17 @@ export const telegramWebhook = functions.https.onRequest(
         const chatId = update.message.chat.id.toString();
         const userMessage = update.message.text;
 
-        // 1. Memory Node: Retrieve context for this specific user/chat session
-        const {
-          messages: chatHistory,
-          summary,
-          userName,
-        } = await memoryService.getSessionData(chatId);
+        // Execute dynamic pipeline
+        const result = await processMessage(chatId, userMessage);
 
-        // 2. Orchestrator Node: Classify Intent
-        const intent = await orchestrator.classifyIntent(
-          summary,
-          userName,
-          userMessage,
-        );
-
-        let finalAIResponseText = '';
-
-        switch (intent) {
-          case 'CATALOG': {
-            // 3a. Catalog Route: Validator → Specialist
-            const validation = await catalogSpecialist.validateRequest(
-              chatHistory,
-              userMessage,
-              summary,
-              userName,
-            );
-
-            if (!validation.isValid && validation.missingInfoMessage) {
-              finalAIResponseText = validation.missingInfoMessage;
-            } else if (validation.extractedData) {
-              finalAIResponseText = await catalogSpecialist.generateResponse(
-                validation.extractedData,
-                userName,
-              );
-            }
-            break;
-          }
-
-          case 'GENERAL_INFO': {
-            // 3b. General Info Route: AI-powered FAQ agent
-            finalAIResponseText = await generalInfoService.generateResponse(
-              chatHistory,
-              userMessage,
-              summary,
-              userName,
-            );
-            break;
-          }
-
-          case 'APPOINTMENT': {
-            // 3c. Appointment Route: Validator → Confirmation
-            const apptValidation = await appointmentService.validateRequest(
-              chatHistory,
-              userMessage,
-              summary,
-              userName,
-            );
-
-            if (!apptValidation.isValid && apptValidation.missingInfoMessage) {
-              finalAIResponseText = apptValidation.missingInfoMessage;
-            } else if (apptValidation.extractedData) {
-              finalAIResponseText =
-                await appointmentService.generateConfirmation(
-                  apptValidation.extractedData,
-                  userName,
-                );
-            }
-            break;
-          }
-
-          case 'GENERIC':
-          default:
-            finalAIResponseText = await genericService.generateResponse(
-              chatHistory,
-              userMessage,
-              summary,
-              userName,
-            );
-            break;
-        }
-
-        // 5. Output: Send the final text via the Telegram Bot API
         try {
-          await bot.sendMessage(chatId, finalAIResponseText, {
+          await bot.sendMessage(chatId, result.response, {
             parse_mode: 'Markdown',
           });
         } catch {
           // Fallback: Telegram rejects malformed Markdown, so send as plain text
-          await bot.sendMessage(chatId, finalAIResponseText);
+          await bot.sendMessage(chatId, result.response);
         }
-
-        // 6. Memory Append: Save the interaction context for the future
-        const updatedState = await summarizerService.updateState(
-          summary,
-          userName,
-          userMessage,
-          finalAIResponseText,
-        );
-        const newMessages: Message[] = [
-          { role: 'user', content: userMessage, timestamp: new Date() },
-          {
-            role: 'assistant',
-            content: finalAIResponseText,
-            timestamp: new Date(),
-          },
-        ];
-        await memoryService.updateSessionData(
-          chatId,
-          newMessages,
-          updatedState.summary,
-          updatedState.userName,
-        );
       }
 
       // Always return 200 OK so Telegram knows we received it

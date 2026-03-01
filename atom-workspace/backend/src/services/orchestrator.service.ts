@@ -8,55 +8,61 @@ export interface Message {
   content: string;
 }
 
+export interface OrchestratorNodeData {
+  prompt?: string;
+  model?: string;
+  outputLabels?: string[];
+}
+
 /**
  * Service to orchestrate the routing of incoming messages based on user intent.
  */
 export class OrchestratorService {
   /**
    * Classifies the intent of the conversation.
-   * @param summary The ongoing summary of the chat.
-   * @param userName The user's name if known.
-   * @param newMessage The latest user message.
-   * @returns The classified Intent.
    */
   async classifyIntent(
     summary: string,
     userName: string | null,
     newMessage: string,
-  ): Promise<Intent> {
+    nodeData?: OrchestratorNodeData,
+  ): Promise<string> {
+    const editorPrompt = nodeData?.prompt || 'You are an intent classifier. Analyze the message.';
+    const modelId = nodeData?.model || 'gemini-2.5-flash';
+    const validLabels = nodeData?.outputLabels || ['GENERIC'];
+
     const systemPrompt = `
-You are the Orchestrator for a Car Dealership AI Assistant.
-Your sole job is to classify the user's intent based on their latest message and recent chat history.
+${editorPrompt}
 
 User's Name: ${userName || 'Unknown'}
 Conversation Summary: ${summary || 'No prior conversation'}
 
-You must output ONLY ONE of the following precise words, with no punctuation or extra text:
-- 'GENERAL_INFO': If the user is asking about dealership hours, location, or general policies.
-- 'CATALOG': If the user is looking for a car, asking about inventory, prices, models, or types of vehicles.
-- 'APPOINTMENT': If the user explicitly wants to schedule a test drive or service appointment.
-- 'GENERIC': If none of the above fit, or if it's just a greeting or small talk.
+You MUST output EXACTLY ONE of the following tags, and absolutely nothing else:
+${validLabels.map(label => `- ${label}`).join('\n')}
 `;
 
     const messagesToSend: Message[] = [{ role: 'user', content: newMessage }];
 
     try {
       const { text } = await generateText({
-        model: google('gemini-2.5-flash'), // Fast model for routing
+        model: google(modelId),
         system: systemPrompt,
         messages: messagesToSend,
       });
 
       const intentText = text.trim().toUpperCase();
 
-      // Validate the output matches our exact types, default to GENERIC if it hallucinated
-      if (['GENERAL_INFO', 'CATALOG', 'APPOINTMENT'].includes(intentText)) {
-        return intentText as Intent;
+      // Validate the output matches the explicitly defined labels
+      if (validLabels.includes(intentText)) {
+        return intentText;
       }
-      return 'GENERIC';
+      
+      // Fallback if it hallucinates
+      return validLabels.includes('GENERIC') ? 'GENERIC' : validLabels[0];
     } catch (error) {
       console.error('Error classifying intent:', error);
-      return 'GENERIC'; // Default safe route on error
+      return validLabels.includes('GENERIC') ? 'GENERIC' : validLabels[0];
     }
   }
 }
+
