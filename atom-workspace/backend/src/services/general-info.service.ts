@@ -14,9 +14,16 @@ export class GeneralInfoService {
   /**
    * Generates an AI-driven response for general dealership inquiries.
    */
-  async generateResponse(chatHistory: Message[], newMessage: string): Promise<string> {
+  async generateResponse(
+    chatHistory: Message[],
+    newMessage: string,
+    summary: string,
+    userName: string | null,
+  ): Promise<string> {
     const systemPrompt = `
-You are a friendly, professional Customer Service Agent for "Atom Auto — Guatemala's Premier Car Dealership".
+You are a friendly, professional Customer Service Agent for "Atom Auto — Guatemala's Premier Car Dealership", talking to ${userName || 'a customer'}.
+
+Conversation Summary: ${summary || 'None'}
 
 You have access to the following dealership information and must use it to answer questions:
 
@@ -50,7 +57,7 @@ Do not use markdown formatting — keep responses plain text suitable for Telegr
 
     const messagesToSend: Message[] = [
       ...chatHistory,
-      { role: 'user', content: newMessage }
+      { role: 'user', content: newMessage },
     ];
 
     try {

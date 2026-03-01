@@ -1,0 +1,41 @@
+# Default: list available recipes (run `just <recipe>` to run one)
+[private]
+default:
+    @just --list
+
+# Format code with Prettier
+format:
+    pnpm exec nx format:write
+
+# Start the frontend development server
+dev:
+    pnpm exec nx serve frontend
+
+force-stop:
+    lsof -ti:4200 | xargs kill -9
+
+# Check code formatting (useful for CI or before committing)
+check-format:
+    pnpm exec nx format:check
+
+# Run linter across the workspace to check for warnings and errors
+lint:
+    pnpm exec nx run-many -t lint
+
+# Run all pre-commit checks (format check and lint)
+check: check-format lint
+
+# Build all applications and libraries
+build:
+    pnpm exec nx run-many -t build
+
+# Remove build outputs and clear NX cache
+clean:
+    rm -rf dist
+    pnpm exec nx reset
+
+# Install dependencies, clean, and build
+update:
+    pnpm install
+    just clean
+    just build

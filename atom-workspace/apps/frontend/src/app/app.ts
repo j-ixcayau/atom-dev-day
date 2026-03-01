@@ -1,9 +1,22 @@
-import { Component, ViewChild, signal, effect, OnInit } from '@angular/core';
+import {
+  Component,
+  ViewChild,
+  signal,
+  effect,
+  OnInit,
+  AfterViewInit,
+  ChangeDetectorRef,
+  inject,
+} from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
-import { NodeEditor, WorkflowNode, NodeType, NodeData } from '../../components/node-editor';
+import {
+  NodeEditor,
+  WorkflowNode,
+  NodeType,
+} from '../../components/node-editor';
 
 export interface DeploymentRecord {
   id: string;
@@ -21,17 +34,28 @@ export interface ChatMessage {
 }
 
 @Component({
-  imports: [RouterModule, UpperCasePipe, HttpClientModule, FormsModule, NodeEditor],
+  imports: [
+    RouterModule,
+    UpperCasePipe,
+    HttpClientModule,
+    FormsModule,
+    NodeEditor,
+  ],
   selector: 'app-root',
   templateUrl: './app.html',
   styleUrl: './app.css',
 })
-export class App implements OnInit {
+export class App implements OnInit, AfterViewInit {
   @ViewChild(NodeEditor) nodeEditor!: NodeEditor;
+
+  private http = inject(HttpClient);
+  private cdr = inject(ChangeDetectorRef);
 
   // Navigation state
   activeTopTab = signal<'flow-editor' | 'deployments'>('flow-editor');
-  activeBottomTab = signal<'editor' | 'nodes' | 'chat' | 'settings' | 'profile'>('editor');
+  activeBottomTab = signal<
+    'editor' | 'nodes' | 'chat' | 'settings' | 'profile'
+  >('editor');
 
   // Modal & toast state
   showJsonModal = signal(false);
@@ -63,8 +87,10 @@ export class App implements OnInit {
   isChatLoading = signal(false);
 
   // Firebase endpoints
-  private readonly SAVE_CONFIG_URL = 'https://saveflowconfig-gcfb7e7ryq-uc.a.run.app';
-  private readonly WEBCHAT_URL = 'https://us-central1-atom-dev-day.cloudfunctions.net/webChat';
+  private readonly SAVE_CONFIG_URL =
+    'https://saveflowconfig-gcfb7e7ryq-uc.a.run.app';
+  private readonly WEBCHAT_URL =
+    'https://us-central1-atom-dev-day.cloudfunctions.net/webChat';
 
   // Available models
   readonly modelOptions = [
@@ -74,19 +100,47 @@ export class App implements OnInit {
   ];
 
   // All node types for toolbox
-  readonly nodeTypes: { type: NodeType; icon: string; label: string; color: string }[] = [
+  readonly nodeTypes: {
+    type: NodeType;
+    icon: string;
+    label: string;
+    color: string;
+  }[] = [
     { type: 'incoming', icon: 'chat', label: 'Incoming', color: 'sky' },
-    { type: 'memory', icon: 'psychology_alt', label: 'Memory', color: 'violet' },
-    { type: 'orchestrator', icon: 'psychology', label: 'Orchestrator', color: 'primary' },
-    { type: 'validator', icon: 'verified_user', label: 'Validator', color: 'emerald' },
-    { type: 'specialist', icon: 'smart_toy', label: 'Specialist', color: 'amber' },
+    {
+      type: 'memory',
+      icon: 'psychology_alt',
+      label: 'Memory',
+      color: 'violet',
+    },
+    {
+      type: 'orchestrator',
+      icon: 'psychology',
+      label: 'Orchestrator',
+      color: 'primary',
+    },
+    {
+      type: 'validator',
+      icon: 'verified_user',
+      label: 'Validator',
+      color: 'emerald',
+    },
+    {
+      type: 'specialist',
+      icon: 'smart_toy',
+      label: 'Specialist',
+      color: 'amber',
+    },
     { type: 'generic', icon: 'forum', label: 'Generic', color: 'rose' },
   ];
 
-  constructor(private http: HttpClient) {
+  constructor() {
     // Persist settings
     effect(() => {
-      localStorage.setItem('atom-snap-to-grid', JSON.stringify(this.snapToGrid()));
+      localStorage.setItem(
+        'atom-snap-to-grid',
+        JSON.stringify(this.snapToGrid()),
+      );
     });
 
     effect(() => {
@@ -107,8 +161,15 @@ export class App implements OnInit {
     if (deployments) {
       try {
         const parsed = JSON.parse(deployments);
-        this.deployments.set(parsed.map((d: DeploymentRecord) => ({ ...d, timestamp: new Date(d.timestamp) })));
-      } catch { /* ignore corrupted data */ }
+        this.deployments.set(
+          parsed.map((d: DeploymentRecord) => ({
+            ...d,
+            timestamp: new Date(d.timestamp),
+          })),
+        );
+      } catch {
+        /* ignore corrupted data */
+      }
     }
 
     // Restore chat history
@@ -116,9 +177,23 @@ export class App implements OnInit {
     if (chat) {
       try {
         const parsed = JSON.parse(chat);
-        this.chatMessages.set(parsed.map((m: ChatMessage) => ({ ...m, timestamp: new Date(m.timestamp) })));
-      } catch { /* ignore corrupted data */ }
+        this.chatMessages.set(
+          parsed.map((m: ChatMessage) => ({
+            ...m,
+            timestamp: new Date(m.timestamp),
+          })),
+        );
+      } catch {
+        /* ignore corrupted data */
+      }
     }
+  }
+
+  ngAfterViewInit() {
+    // Force a change detection cycle after the child NodeEditor component is fully initialized.
+    // This prevents ExpressionChangedAfterItHasBeenCheckedError that triggers when bindings
+    // like `nodeEditor.nodes().length` immediately calculate a value of '6' before first paint.
+    this.cdr.detectChanges();
   }
 
   // ==================== NODE SELECTION (Properties Panel) ====================
@@ -136,7 +211,7 @@ export class App implements OnInit {
 
     this.nodeEditor.updateNodeData(node.id, {
       prompt: this.editingPrompt(),
-      model: this.editingModel()
+      model: this.editingModel(),
     });
     this.showNotification('💾 Node properties saved', 'save');
   }
@@ -183,13 +258,13 @@ export class App implements OnInit {
       description: `${graph.nodes.length} nodes, ${graph.edges.length} edges`,
       timestamp: new Date(),
       status: 'live',
-      graphSnapshot: graph
+      graphSnapshot: graph,
     };
 
     // Mark previous deployments as replaced
-    const updatedHistory = this.deployments().map(d => ({
+    const updatedHistory = this.deployments().map((d) => ({
       ...d,
-      status: 'replaced' as const
+      status: 'replaced' as const,
     }));
 
     const newHistory = [deployment, ...updatedHistory];
@@ -210,10 +285,16 @@ export class App implements OnInit {
       if (response.ok) {
         this.showNotification('✅ Flow deployed to Firestore!', 'check_circle');
       } else {
-        this.showNotification('✅ Flow saved locally! (Firestore: ' + response.status + ')', 'cloud_done');
+        this.showNotification(
+          '✅ Flow saved locally! (Firestore: ' + response.status + ')',
+          'cloud_done',
+        );
       }
     } catch {
-      this.showNotification('✅ Flow config saved locally! (endpoint offline)', 'cloud_done');
+      this.showNotification(
+        '✅ Flow config saved locally! (endpoint offline)',
+        'cloud_done',
+      );
     }
 
     this.isDeploying.set(false);
@@ -225,8 +306,12 @@ export class App implements OnInit {
     if (!message || this.isChatLoading()) return;
 
     // Add user message
-    const userMsg: ChatMessage = { role: 'user', content: message, timestamp: new Date() };
-    this.chatMessages.update(curr => [...curr, userMsg]);
+    const userMsg: ChatMessage = {
+      role: 'user',
+      content: message,
+      timestamp: new Date(),
+    };
+    this.chatMessages.update((curr) => [...curr, userMsg]);
     this.chatInput.set('');
     this.isChatLoading.set(true);
     this.persistChat();
@@ -237,7 +322,7 @@ export class App implements OnInit {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: message,
-          sessionId: 'web-test-session' // A fixed session ID for the test chat to remember context
+          sessionId: 'web-test-session', // A fixed session ID for the test chat to remember context
         }),
       });
 
@@ -246,24 +331,25 @@ export class App implements OnInit {
         const assistantMsg: ChatMessage = {
           role: 'assistant',
           content: data.response || '✅ Received empty response.',
-          timestamp: new Date()
+          timestamp: new Date(),
         };
-        this.chatMessages.update(curr => [...curr, assistantMsg]);
+        this.chatMessages.update((curr) => [...curr, assistantMsg]);
       } else {
         const assistantMsg: ChatMessage = {
           role: 'assistant',
           content: 'The endpoint returned status ' + response.status + '.',
-          timestamp: new Date()
+          timestamp: new Date(),
         };
-        this.chatMessages.update(curr => [...curr, assistantMsg]);
+        this.chatMessages.update((curr) => [...curr, assistantMsg]);
       }
     } catch {
       const assistantMsg: ChatMessage = {
         role: 'assistant',
-        content: '⚠️ Could not reach the backend. Make sure Firebase Cloud Functions are deployed. Run: `firebase deploy --only functions`',
-        timestamp: new Date()
+        content:
+          '⚠️ Could not reach the backend. Make sure Firebase Cloud Functions are deployed. Run: `firebase deploy --only functions`',
+        timestamp: new Date(),
       };
-      this.chatMessages.update(curr => [...curr, assistantMsg]);
+      this.chatMessages.update((curr) => [...curr, assistantMsg]);
     }
 
     this.isChatLoading.set(false);
@@ -293,7 +379,9 @@ export class App implements OnInit {
 
   deleteSelectedNode() {
     if (this.nodeEditor?.selectedNodeId()) {
-      const node = this.nodeEditor.nodes().find(n => n.id === this.nodeEditor.selectedNodeId());
+      const node = this.nodeEditor
+        .nodes()
+        .find((n) => n.id === this.nodeEditor.selectedNodeId());
       this.nodeEditor.removeNode(this.nodeEditor.selectedNodeId()!);
       this.selectedNode.set(null);
       this.showNotification(`🗑 Deleted "${node?.title || 'node'}"`, 'delete');
@@ -328,7 +416,9 @@ export class App implements OnInit {
 
   getTimeSince(timestamp: Date): string {
     const now = new Date();
-    const seconds = Math.floor((now.getTime() - new Date(timestamp).getTime()) / 1000);
+    const seconds = Math.floor(
+      (now.getTime() - new Date(timestamp).getTime()) / 1000,
+    );
 
     if (seconds < 60) return `${seconds}s ago`;
     if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
@@ -337,7 +427,7 @@ export class App implements OnInit {
   }
 
   // ==================== NOTIFICATIONS ====================
-  showNotification(message: string, icon: string = 'check_circle') {
+  showNotification(message: string, icon = 'check_circle') {
     this.toastMessage.set(message);
     this.toastIcon.set(icon);
     this.showToast.set(true);
@@ -346,10 +436,16 @@ export class App implements OnInit {
 
   // ==================== PERSISTENCE ====================
   private persistDeployments() {
-    localStorage.setItem('atom-deployments', JSON.stringify(this.deployments()));
+    localStorage.setItem(
+      'atom-deployments',
+      JSON.stringify(this.deployments()),
+    );
   }
 
   private persistChat() {
-    localStorage.setItem('atom-chat-messages', JSON.stringify(this.chatMessages()));
+    localStorage.setItem(
+      'atom-chat-messages',
+      JSON.stringify(this.chatMessages()),
+    );
   }
 }

@@ -14,14 +14,22 @@ export interface Message {
 export class OrchestratorService {
   /**
    * Classifies the intent of the conversation.
-   * @param chatHistory The recent chat history for context.
+   * @param summary The ongoing summary of the chat.
+   * @param userName The user's name if known.
    * @param newMessage The latest user message.
    * @returns The classified Intent.
    */
-  async classifyIntent(chatHistory: Message[], newMessage: string): Promise<Intent> {
+  async classifyIntent(
+    summary: string,
+    userName: string | null,
+    newMessage: string,
+  ): Promise<Intent> {
     const systemPrompt = `
 You are the Orchestrator for a Car Dealership AI Assistant.
 Your sole job is to classify the user's intent based on their latest message and recent chat history.
+
+User's Name: ${userName || 'Unknown'}
+Conversation Summary: ${summary || 'No prior conversation'}
 
 You must output ONLY ONE of the following precise words, with no punctuation or extra text:
 - 'GENERAL_INFO': If the user is asking about dealership hours, location, or general policies.
@@ -30,10 +38,7 @@ You must output ONLY ONE of the following precise words, with no punctuation or 
 - 'GENERIC': If none of the above fit, or if it's just a greeting or small talk.
 `;
 
-    const messagesToSend: Message[] = [
-      ...chatHistory,
-      { role: 'user', content: newMessage }
-    ];
+    const messagesToSend: Message[] = [{ role: 'user', content: newMessage }];
 
     try {
       const { text } = await generateText({
@@ -49,7 +54,6 @@ You must output ONLY ONE of the following precise words, with no punctuation or 
         return intentText as Intent;
       }
       return 'GENERIC';
-      
     } catch (error) {
       console.error('Error classifying intent:', error);
       return 'GENERIC'; // Default safe route on error

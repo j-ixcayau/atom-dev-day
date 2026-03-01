@@ -9,7 +9,7 @@
     {
       "source": "dist/backend",
       "codebase": "default",
-      "runtime": "nodejs20",
+      "runtime": "nodejs22",
       "disallowLegacyRuntimeConfig": true,
       "ignore": [
         "node_modules",

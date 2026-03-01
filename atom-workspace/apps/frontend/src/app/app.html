@@ -1,126 +1,226 @@
 <!-- Top Navigation Bar -->
-<header class="flex items-center justify-between px-4 py-3 bg-background-light/50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-primary/20 backdrop-blur-md z-30">
-<div class="flex items-center gap-3">
-<div class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white">
-<span class="material-symbols-outlined text-xl">auto_awesome</span>
-</div>
-<h1 class="text-lg font-bold tracking-tight">DevDay Atom 2026</h1>
-</div>
-<div class="flex items-center gap-2">
-<button (click)="openJsonModal()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-primary/10 text-xs font-semibold hover:bg-slate-300 dark:hover:bg-primary/20 transition-colors" title="Export graph as JSON">
-<span class="material-symbols-outlined text-sm">data_object</span>
-<span>JSON</span>
-</button>
-<button (click)="deploy()" [disabled]="isDeploying()" class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed" title="Deploy flow config to Firestore">
-<span class="material-symbols-outlined text-sm" [class.animate-spin]="isDeploying()">{{ isDeploying() ? 'progress_activity' : 'rocket_launch' }}</span>
-<span>{{ isDeploying() ? 'Deploying...' : 'Deploy' }}</span>
-</button>
-</div>
+<header
+  class="flex items-center justify-between px-4 py-3 bg-background-light/50 dark:bg-background-dark/50 border-b border-slate-200 dark:border-primary/20 backdrop-blur-md z-30"
+>
+  <div class="flex items-center gap-3">
+    <div
+      class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white"
+    >
+      <span class="material-symbols-outlined text-xl">auto_awesome</span>
+    </div>
+    <h1 class="text-lg font-bold tracking-tight">DevDay Atom 2026</h1>
+  </div>
+  <div class="flex items-center gap-2">
+    <button
+      (click)="openJsonModal()"
+      class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-200 dark:bg-primary/10 text-xs font-semibold hover:bg-slate-300 dark:hover:bg-primary/20 transition-colors"
+      title="Export graph as JSON"
+    >
+      <span class="material-symbols-outlined text-sm">data_object</span>
+      <span>JSON</span>
+    </button>
+    <button
+      (click)="deploy()"
+      [disabled]="isDeploying()"
+      class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-bold hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+      title="Deploy flow config to Firestore"
+    >
+      <span
+        class="material-symbols-outlined text-sm"
+        [class.animate-spin]="isDeploying()"
+        >{{ isDeploying() ? 'progress_activity' : 'rocket_launch' }}</span
+      >
+      <span>{{ isDeploying() ? 'Deploying...' : 'Deploy' }}</span>
+    </button>
+  </div>
 </header>
 
 <!-- Sub-navigation/Tabs -->
-<nav class="flex px-4 border-b border-slate-200 dark:border-primary/10 bg-white/50 dark:bg-background-dark/30 z-20">
-<a (click)="activeTopTab.set('flow-editor')" 
-   class="flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm cursor-pointer transition-colors"
-   [class.border-primary]="activeTopTab() === 'flow-editor'"
-   [class.text-primary]="activeTopTab() === 'flow-editor'"
-   [class.font-bold]="activeTopTab() === 'flow-editor'"
-   [class.border-transparent]="activeTopTab() !== 'flow-editor'"
-   [class.text-slate-500]="activeTopTab() !== 'flow-editor'">
-<span class="material-symbols-outlined text-lg">schema</span>
-<span>Flow Editor</span>
-</a>
-<a (click)="activeTopTab.set('deployments')"
-   class="flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm cursor-pointer transition-colors"
-   [class.border-primary]="activeTopTab() === 'deployments'"
-   [class.text-primary]="activeTopTab() === 'deployments'"
-   [class.font-bold]="activeTopTab() === 'deployments'"
-   [class.border-transparent]="activeTopTab() !== 'deployments'"
-   [class.text-slate-500]="activeTopTab() !== 'deployments'">
-<span class="material-symbols-outlined text-lg">rocket_launch</span>
-<span>Deployments</span>
-@if (deployments().length > 0) {
-<span class="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center">{{ deployments().length }}</span>
-}
-</a>
+<nav
+  class="flex px-4 border-b border-slate-200 dark:border-primary/10 bg-white/50 dark:bg-background-dark/30 z-20"
+>
+  <a
+    (click)="activeTopTab.set('flow-editor')"
+    class="flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm cursor-pointer transition-colors"
+    [class.border-primary]="activeTopTab() === 'flow-editor'"
+    [class.text-primary]="activeTopTab() === 'flow-editor'"
+    [class.font-bold]="activeTopTab() === 'flow-editor'"
+    [class.border-transparent]="activeTopTab() !== 'flow-editor'"
+    [class.text-slate-500]="activeTopTab() !== 'flow-editor'"
+  >
+    <span class="material-symbols-outlined text-lg">schema</span>
+    <span>Flow Editor</span>
+  </a>
+  <a
+    (click)="activeTopTab.set('deployments')"
+    class="flex items-center gap-2 px-4 py-3 border-b-2 font-medium text-sm cursor-pointer transition-colors"
+    [class.border-primary]="activeTopTab() === 'deployments'"
+    [class.text-primary]="activeTopTab() === 'deployments'"
+    [class.font-bold]="activeTopTab() === 'deployments'"
+    [class.border-transparent]="activeTopTab() !== 'deployments'"
+    [class.text-slate-500]="activeTopTab() !== 'deployments'"
+  >
+    <span class="material-symbols-outlined text-lg">rocket_launch</span>
+    <span>Deployments</span>
+    @if (deployments().length > 0) {
+    <span
+      class="w-5 h-5 rounded-full bg-primary text-white text-[10px] font-bold flex items-center justify-center"
+      >{{ deployments().length }}</span
+    >
+    }
+  </a>
 </nav>
 
 <!-- Main Workspace Area -->
 <main class="relative flex-1 overflow-hidden">
-
   <!-- ==================== FLOW EDITOR VIEW ==================== -->
   @if (activeTopTab() === 'flow-editor' && activeBottomTab() === 'editor') {
   <div class="absolute inset-0" [class.dot-grid]="showGrid()">
     <!-- Floating Sidebar/Toolbox -->
     <div class="absolute left-4 top-4 flex flex-col gap-3 z-10">
-    <!-- Node Type Tools -->
-    <div class="glass-panel p-2 rounded-xl flex flex-col gap-1.5 shadow-xl border-primary/20">
-    <p class="text-[8px] font-bold uppercase tracking-widest text-slate-500 px-1 mb-0.5">Nodes</p>
-    <button (click)="addNode('incoming')" class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-sky-500/20 hover:text-sky-400 transition-all" title="Add Incoming Message">
-    <span class="material-symbols-outlined">chat</span>
-    </button>
-    <button (click)="addNode('memory')" class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-violet-500/20 hover:text-violet-400 transition-all" title="Add Memory Node">
-    <span class="material-symbols-outlined">psychology_alt</span>
-    </button>
-    <button (click)="addNode('orchestrator')" class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary/20 text-primary hover:bg-primary hover:text-white transition-all" title="Add Orchestrator">
-    <span class="material-symbols-outlined">psychology</span>
-    </button>
-    <button (click)="addNode('validator')" class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all" title="Add Validator">
-    <span class="material-symbols-outlined">verified_user</span>
-    </button>
-    <button (click)="addNode('specialist')" class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-amber-500/20 hover:text-amber-500 transition-all" title="Add Specialist">
-    <span class="material-symbols-outlined">smart_toy</span>
-    </button>
-    <button (click)="addNode('generic')" class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition-all" title="Add Generic Agent">
-    <span class="material-symbols-outlined">forum</span>
-    </button>
-    <div class="w-full h-px bg-slate-200 dark:bg-primary/20 my-0.5"></div>
-    <button (click)="deleteSelectedNode()" class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition-all" title="Delete Selected Node">
-    <span class="material-symbols-outlined">delete</span>
-    </button>
-    </div>
-    <!-- Canvas Controls -->
-    <div class="glass-panel p-2 rounded-xl flex flex-col gap-2 shadow-xl border-primary/20">
-    <button (click)="toggleShowGrid()" class="w-10 h-10 flex items-center justify-center rounded-lg transition-all" [class.bg-primary/20]="showGrid()" [class.text-primary]="showGrid()" [class.bg-slate-800/50]="!showGrid()" [class.text-slate-400]="!showGrid()" title="Toggle Grid">
-    <span class="material-symbols-outlined">grid_4x4</span>
-    </button>
-    <button (click)="toggleSnapToGrid()" class="w-10 h-10 flex items-center justify-center rounded-lg transition-all" [class.bg-primary/20]="snapToGrid()" [class.text-primary]="snapToGrid()" [class.bg-slate-800/50]="!snapToGrid()" [class.text-slate-400]="!snapToGrid()" title="Snap to Grid">
-    <span class="material-symbols-outlined">grid_on</span>
-    </button>
-    </div>
+      <!-- Node Type Tools -->
+      <div
+        class="glass-panel p-2 rounded-xl flex flex-col gap-1.5 shadow-xl border-primary/20"
+      >
+        <p
+          class="text-[8px] font-bold uppercase tracking-widest text-slate-500 px-1 mb-0.5"
+        >
+          Nodes
+        </p>
+        <button
+          (click)="addNode('incoming')"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-sky-500/20 hover:text-sky-400 transition-all"
+          title="Add Incoming Message"
+        >
+          <span class="material-symbols-outlined">chat</span>
+        </button>
+        <button
+          (click)="addNode('memory')"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-violet-500/20 hover:text-violet-400 transition-all"
+          title="Add Memory Node"
+        >
+          <span class="material-symbols-outlined">psychology_alt</span>
+        </button>
+        <button
+          (click)="addNode('orchestrator')"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-primary/20 text-primary hover:bg-primary hover:text-white transition-all"
+          title="Add Orchestrator"
+        >
+          <span class="material-symbols-outlined">psychology</span>
+        </button>
+        <button
+          (click)="addNode('validator')"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-emerald-500/20 hover:text-emerald-400 transition-all"
+          title="Add Validator"
+        >
+          <span class="material-symbols-outlined">verified_user</span>
+        </button>
+        <button
+          (click)="addNode('specialist')"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-amber-500/20 hover:text-amber-500 transition-all"
+          title="Add Specialist"
+        >
+          <span class="material-symbols-outlined">smart_toy</span>
+        </button>
+        <button
+          (click)="addNode('generic')"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-rose-500/20 hover:text-rose-400 transition-all"
+          title="Add Generic Agent"
+        >
+          <span class="material-symbols-outlined">forum</span>
+        </button>
+        <div class="w-full h-px bg-slate-200 dark:bg-primary/20 my-0.5"></div>
+        <button
+          (click)="deleteSelectedNode()"
+          class="w-10 h-10 flex items-center justify-center rounded-lg bg-slate-200/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 hover:bg-red-500/20 hover:text-red-400 transition-all"
+          title="Delete Selected Node"
+        >
+          <span class="material-symbols-outlined">delete</span>
+        </button>
+      </div>
+      <!-- Canvas Controls -->
+      <div
+        class="glass-panel p-2 rounded-xl flex flex-col gap-2 shadow-xl border-primary/20"
+      >
+        <button
+          (click)="toggleShowGrid()"
+          class="w-10 h-10 flex items-center justify-center rounded-lg transition-all"
+          [class.bg-primary]="showGrid()"
+          [class.text-primary]="showGrid()"
+          [class.bg-slate-800]="!showGrid()"
+          [class.text-slate-400]="!showGrid()"
+          title="Toggle Grid"
+        >
+          <span class="material-symbols-outlined">grid_4x4</span>
+        </button>
+        <button
+          (click)="toggleSnapToGrid()"
+          class="w-10 h-10 flex items-center justify-center rounded-lg transition-all"
+          [class.bg-primary]="snapToGrid()"
+          [class.text-primary]="snapToGrid()"
+          [class.bg-slate-800]="!snapToGrid()"
+          [class.text-slate-400]="!snapToGrid()"
+          title="Snap to Grid"
+        >
+          <span class="material-symbols-outlined">grid_on</span>
+        </button>
+      </div>
     </div>
 
     <!-- Canvas Content (Active Graph Editor) -->
     <div class="absolute inset-0">
-        <app-node-editor (selectedNodeChanged)="onNodeSelected($event)"></app-node-editor>
+      <app-node-editor
+        (selectedNodeChanged)="onNodeSelected($event)"
+      ></app-node-editor>
     </div>
 
     <!-- Properties Panel (slides in from right when node selected) -->
     @if (selectedNode()) {
-    <div class="absolute right-0 top-0 bottom-0 w-80 glass-panel border-l border-primary/20 shadow-2xl z-20 flex flex-col properties-panel">
-      <div class="flex items-center justify-between p-4 border-b border-white/10">
+    <div
+      class="absolute right-0 top-0 bottom-0 w-80 glass-panel border-l border-primary/20 shadow-2xl z-20 flex flex-col properties-panel"
+    >
+      <div
+        class="flex items-center justify-between p-4 border-b border-white/10"
+      >
         <div class="flex items-center gap-2">
-          <div class="w-8 h-8 rounded-lg flex items-center justify-center border {{ nodeEditor.getColorClass(selectedNode()!.type) }}">
-            <span class="material-symbols-outlined text-base">{{ nodeEditor.getIcon(selectedNode()!.type) }}</span>
+          <div
+            class="w-8 h-8 rounded-lg flex items-center justify-center border {{ nodeEditor.getColorClass(selectedNode()!.type) }}"
+          >
+            <span class="material-symbols-outlined text-base"
+              >{{ nodeEditor.getIcon(selectedNode()!.type) }}</span
+            >
           </div>
           <div>
             <h3 class="font-bold text-sm">{{ selectedNode()!.title }}</h3>
-            <p class="text-[10px] text-slate-400 font-mono uppercase">{{ selectedNode()!.type }} node</p>
+            <p class="text-[10px] text-slate-400 font-mono uppercase">
+              {{ selectedNode()!.type }} node
+            </p>
           </div>
         </div>
-        <button (click)="closeProperties()" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+        <button
+          (click)="closeProperties()"
+          class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+        >
           <span class="material-symbols-outlined text-sm">close</span>
         </button>
       </div>
 
       <div class="flex-1 overflow-y-auto p-4 space-y-4">
         <!-- Model Selection -->
-        @if (selectedNode()!.type !== 'incoming' && selectedNode()!.type !== 'memory') {
+        @if (selectedNode()!.type !== 'incoming' && selectedNode()!.type !==
+        'memory') {
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">AI Model</label>
-          <select [ngModel]="editingModel()" (ngModelChange)="editingModel.set($event)" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary/50 transition-colors">
+          <label
+            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block"
+            >AI Model</label
+          >
+          <select
+            [ngModel]="editingModel()"
+            (ngModelChange)="editingModel.set($event)"
+            class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary/50 transition-colors"
+          >
             @for (opt of modelOptions; track opt.value) {
-              <option [value]="opt.value">{{ opt.label }}</option>
+            <option [value]="opt.value">{{ opt.label }}</option>
             }
           </select>
         </div>
@@ -128,17 +228,32 @@
 
         <!-- System Prompt -->
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">System Prompt</label>
-          <textarea [ngModel]="editingPrompt()" (ngModelChange)="editingPrompt.set($event)" rows="8" class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:border-primary/50 transition-colors resize-y" placeholder="Enter the system prompt for this node..."></textarea>
+          <label
+            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block"
+            >System Prompt</label
+          >
+          <textarea
+            [ngModel]="editingPrompt()"
+            (ngModelChange)="editingPrompt.set($event)"
+            rows="8"
+            class="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-xs font-mono leading-relaxed focus:outline-none focus:border-primary/50 transition-colors resize-y"
+            placeholder="Enter the system prompt for this node..."
+          ></textarea>
         </div>
 
         <!-- Required Fields (Validator nodes) -->
         @if (selectedNode()!.data.requiredFields) {
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Required Fields</label>
+          <label
+            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block"
+            >Required Fields</label
+          >
           <div class="flex flex-wrap gap-1.5">
             @for (field of selectedNode()!.data.requiredFields; track field) {
-              <span class="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md text-[10px] font-mono font-bold uppercase">{{ field }}</span>
+            <span
+              class="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md text-[10px] font-mono font-bold uppercase"
+              >{{ field }}</span
+            >
             }
           </div>
         </div>
@@ -147,10 +262,16 @@
         <!-- Output Labels (Orchestrator) -->
         @if (selectedNode()!.data.outputLabels) {
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block">Output Routes</label>
+          <label
+            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block"
+            >Output Routes</label
+          >
           <div class="flex flex-wrap gap-1.5">
             @for (label of selectedNode()!.data.outputLabels; track label) {
-              <span class="px-2 py-1 bg-primary/10 text-primary rounded-md text-[10px] font-mono font-bold uppercase">{{ label }}</span>
+            <span
+              class="px-2 py-1 bg-primary/10 text-primary rounded-md text-[10px] font-mono font-bold uppercase"
+              >{{ label }}</span
+            >
             }
           </div>
         </div>
@@ -158,14 +279,22 @@
 
         <!-- Node ID -->
         <div>
-          <label class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block">Node ID</label>
-          <p class="text-xs font-mono text-slate-500">{{ selectedNode()!.id }}</p>
+          <label
+            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1 block"
+            >Node ID</label
+          >
+          <p class="text-xs font-mono text-slate-500">
+            {{ selectedNode()!.id }}
+          </p>
         </div>
       </div>
 
       <!-- Save Button -->
       <div class="p-4 border-t border-white/10">
-        <button (click)="saveNodeProperties()" class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity">
+        <button
+          (click)="saveNodeProperties()"
+          class="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity"
+        >
           <span class="material-symbols-outlined text-sm">save</span>
           Save Properties
         </button>
@@ -174,10 +303,13 @@
     }
 
     <!-- Info badge -->
-    <div class="absolute right-4 bottom-4 flex items-center gap-2 glass-panel p-2 rounded-lg text-xs font-mono text-slate-400" [class.mr-80]="selectedNode()">
-      <span>{{ nodeEditor?.nodes()?.length || 0 }} nodes</span>
+    <div
+      class="absolute right-4 bottom-4 flex items-center gap-2 glass-panel p-2 rounded-lg text-xs font-mono text-slate-400"
+      [class.mr-80]="selectedNode()"
+    >
+      <span>{{ nodeEditor ? nodeEditor.nodes().length : 0 }} nodes</span>
       <div class="w-px h-3 bg-slate-700"></div>
-      <span>{{ nodeEditor?.edges()?.length || 0 }} edges</span>
+      <span>{{ nodeEditor ? nodeEditor.edges().length : 0 }} edges</span>
     </div>
   </div>
   }
@@ -188,11 +320,16 @@
     <div class="max-w-2xl mx-auto space-y-4">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary">rocket_launch</span>
+          <span class="material-symbols-outlined text-primary"
+            >rocket_launch</span
+          >
           Deployment History
         </h2>
         @if (deployments().length > 0) {
-        <button (click)="clearDeployments()" class="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1">
+        <button
+          (click)="clearDeployments()"
+          class="text-xs text-red-400 hover:text-red-300 transition-colors flex items-center gap-1"
+        >
           <span class="material-symbols-outlined text-sm">delete_sweep</span>
           Clear All
         </button>
@@ -201,24 +338,47 @@
 
       @if (deployments().length === 0) {
       <div class="glass-panel rounded-xl p-8 text-center">
-        <span class="material-symbols-outlined text-4xl text-slate-600 mb-3">cloud_off</span>
+        <span class="material-symbols-outlined text-4xl text-slate-600 mb-3"
+          >cloud_off</span
+        >
         <p class="text-slate-400 text-sm">No deployments yet.</p>
-        <p class="text-slate-500 text-xs mt-1">Click the <strong>Deploy</strong> button to push your flow config.</p>
+        <p class="text-slate-500 text-xs mt-1">
+          Click the <strong>Deploy</strong> button to push your flow config.
+        </p>
       </div>
-      }
-
-      @for (dep of deployments(); track dep.id) {
-      <div class="glass-panel rounded-xl p-4 flex items-center justify-between hover:border-primary/20 transition-colors cursor-pointer" (click)="viewDeploymentGraph(dep)" [class.opacity-50]="dep.status === 'replaced'">
+      } @for (dep of deployments(); track dep.id) {
+      <div
+        class="glass-panel rounded-xl p-4 flex items-center justify-between hover:border-primary/20 transition-colors cursor-pointer"
+        (click)="viewDeploymentGraph(dep)"
+        [class.opacity-50]="dep.status === 'replaced'"
+      >
         <div class="flex items-center gap-3">
-          <div class="w-3 h-3 rounded-full" [class.bg-emerald-400]="dep.status === 'live'" [class.animate-pulse]="dep.status === 'live'" [class.bg-slate-500]="dep.status === 'replaced'" [class.bg-red-500]="dep.status === 'failed'"></div>
+          <div
+            class="w-3 h-3 rounded-full"
+            [class.bg-emerald-400]="dep.status === 'live'"
+            [class.animate-pulse]="dep.status === 'live'"
+            [class.bg-slate-500]="dep.status === 'replaced'"
+            [class.bg-red-500]="dep.status === 'failed'"
+          ></div>
           <div>
             <p class="font-bold text-sm">{{ dep.name }}</p>
-            <p class="text-xs text-slate-400 font-mono">{{ dep.description }}</p>
+            <p class="text-xs text-slate-400 font-mono">
+              {{ dep.description }}
+            </p>
           </div>
         </div>
         <div class="text-right">
-          <p class="text-xs font-bold" [class.text-emerald-400]="dep.status === 'live'" [class.text-slate-400]="dep.status === 'replaced'" [class.text-red-400]="dep.status === 'failed'">{{ dep.status | uppercase }}</p>
-          <p class="text-[10px] text-slate-500">{{ getTimeSince(dep.timestamp) }}</p>
+          <p
+            class="text-xs font-bold"
+            [class.text-emerald-400]="dep.status === 'live'"
+            [class.text-slate-400]="dep.status === 'replaced'"
+            [class.text-red-400]="dep.status === 'failed'"
+          >
+            {{ dep.status | uppercase }}
+          </p>
+          <p class="text-[10px] text-slate-500">
+            {{ getTimeSince(dep.timestamp) }}
+          </p>
         </div>
       </div>
       }
@@ -232,43 +392,71 @@
     <div class="max-w-2xl mx-auto space-y-4">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-bold flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary">inventory_2</span>
-          Active Nodes ({{ nodeEditor.nodes().length }})
+          <span class="material-symbols-outlined text-primary"
+            >inventory_2</span
+          >
+          Active Nodes ({{ nodeEditor ? nodeEditor.nodes().length : 0 }})
         </h2>
-        <button (click)="nodeEditor.resetGraph()" class="text-xs text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1">
+        <button
+          (click)="nodeEditor.resetGraph()"
+          class="text-xs text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1"
+        >
           <span class="material-symbols-outlined text-sm">restart_alt</span>
           Reset Graph
         </button>
       </div>
 
-      @for (node of nodeEditor.nodes(); track node.id) {
-      <div class="glass-panel rounded-xl p-4 flex items-center justify-between group hover:border-primary/30 transition-colors">
+      @if (nodeEditor) { @for (node of nodeEditor.nodes(); track node.id) {
+      <div
+        class="glass-panel rounded-xl p-4 flex items-center justify-between group hover:border-primary/30 transition-colors"
+      >
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg flex items-center justify-center border {{ nodeEditor.getColorClass(node.type) }}">
-            <span class="material-symbols-outlined text-[20px]">{{ nodeEditor.getIcon(node.type) }}</span>
+          <div
+            class="w-10 h-10 rounded-lg flex items-center justify-center border {{ nodeEditor.getColorClass(node.type) }}"
+          >
+            <span class="material-symbols-outlined text-[20px]"
+              >{{ nodeEditor.getIcon(node.type) }}</span
+            >
           </div>
           <div>
             <p class="font-bold text-sm">{{ node.title }}</p>
-            <p class="text-xs text-slate-400 font-mono uppercase">{{ node.type }} · ID: {{ node.id }}</p>
+            <p class="text-xs text-slate-400 font-mono uppercase">
+              {{ node.type }} · ID: {{ node.id }}
+            </p>
             @if (node.data.model) {
-            <p class="text-[10px] text-primary/60 font-mono mt-0.5">{{ node.data.model }}</p>
+            <p class="text-[10px] text-primary/60 font-mono mt-0.5">
+              {{ node.data.model }}
+            </p>
             }
           </div>
         </div>
-        <button (click)="nodeEditor.removeNode(node.id)" class="w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-red-400 transition-all" title="Delete Node">
+        <button
+          (click)="nodeEditor.removeNode(node.id)"
+          class="w-8 h-8 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-500/20 text-red-400 transition-all"
+          title="Delete Node"
+        >
           <span class="material-symbols-outlined text-sm">close</span>
         </button>
       </div>
-      }
+      } }
 
       <!-- Add Node Buttons -->
       <div class="pt-4 grid grid-cols-3 gap-2">
-        @for (nt of nodeTypes; track nt.type) {
-        <button (click)="addNode(nt.type)" class="glass-panel rounded-xl p-3 text-center hover:border-primary/30 transition-colors cursor-pointer">
-          <span class="material-symbols-outlined mb-1" [style.color]="nodeEditor.getAccentColor(nt.type)">{{ nt.icon }}</span>
-          <p class="text-[9px] font-bold uppercase tracking-wider">+ {{ nt.label }}</p>
+        @if (nodeEditor) { @for (nt of nodeTypes; track nt.type) {
+        <button
+          (click)="addNode(nt.type)"
+          class="glass-panel rounded-xl p-3 text-center hover:border-primary/30 transition-colors cursor-pointer"
+        >
+          <span
+            class="material-symbols-outlined mb-1"
+            [style.color]="nodeEditor.getAccentColor(nt.type)"
+            >{{ nt.icon }}</span
+          >
+          <p class="text-[9px] font-bold uppercase tracking-wider">
+            + {{ nt.label }}
+          </p>
         </button>
-        }
+        } }
       </div>
     </div>
   </div>
@@ -278,13 +466,21 @@
   @if (activeTopTab() === 'flow-editor' && activeBottomTab() === 'chat') {
   <div class="absolute inset-0 flex flex-col">
     <!-- Chat Header -->
-    <div class="flex items-center justify-between px-4 py-3 border-b border-white/10">
+    <div
+      class="flex items-center justify-between px-4 py-3 border-b border-white/10"
+    >
       <div class="flex items-center gap-2">
         <span class="material-symbols-outlined text-primary">smart_toy</span>
         <h2 class="font-bold text-sm">Test Chat</h2>
-        <span class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono">Live</span>
+        <span
+          class="text-[10px] bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full font-mono"
+          >Live</span
+        >
       </div>
-      <button (click)="clearChat()" class="text-xs text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1">
+      <button
+        (click)="clearChat()"
+        class="text-xs text-slate-400 hover:text-red-400 transition-colors flex items-center gap-1"
+      >
         <span class="material-symbols-outlined text-sm">delete_sweep</span>
         Clear
       </button>
@@ -294,30 +490,45 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-3">
       @if (chatMessages().length === 0) {
       <div class="text-center py-12">
-        <span class="material-symbols-outlined text-4xl text-slate-600 mb-3">chat_bubble</span>
-        <p class="text-slate-400 text-sm">Send a message to test your AI flow.</p>
-        <p class="text-slate-500 text-xs mt-1">Try: "I'm looking for an SUV under $30,000"</p>
+        <span class="material-symbols-outlined text-4xl text-slate-600 mb-3"
+          >chat_bubble</span
+        >
+        <p class="text-slate-400 text-sm">
+          Send a message to test your AI flow.
+        </p>
+        <p class="text-slate-500 text-xs mt-1">
+          Try: "I'm looking for an SUV under $30,000"
+        </p>
       </div>
-      }
-
-      @for (msg of chatMessages(); track msg.timestamp) {
-      <div class="flex" [class.justify-end]="msg.role === 'user'" [class.justify-start]="msg.role === 'assistant'">
-        <div class="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
+      } @for (msg of chatMessages(); track msg.timestamp) {
+      <div
+        class="flex"
+        [class.justify-end]="msg.role === 'user'"
+        [class.justify-start]="msg.role === 'assistant'"
+      >
+        <div
+          class="max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed"
           [class.bg-primary]="msg.role === 'user'"
           [class.text-white]="msg.role === 'user'"
           [class.rounded-br-md]="msg.role === 'user'"
           [class.glass-panel]="msg.role === 'assistant'"
-          [class.rounded-bl-md]="msg.role === 'assistant'">
+          [class.rounded-bl-md]="msg.role === 'assistant'"
+        >
           {{ msg.content }}
         </div>
       </div>
-      }
-
-      @if (isChatLoading()) {
+      } @if (isChatLoading()) {
       <div class="flex justify-start">
-        <div class="glass-panel rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
-          <span class="material-symbols-outlined text-primary text-sm animate-spin">progress_activity</span>
-          <span class="text-xs text-slate-400">Processing through AI pipeline...</span>
+        <div
+          class="glass-panel rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2"
+        >
+          <span
+            class="material-symbols-outlined text-primary text-sm animate-spin"
+            >progress_activity</span
+          >
+          <span class="text-xs text-slate-400"
+            >Processing through AI pipeline...</span
+          >
         </div>
       </div>
       }
@@ -326,8 +537,20 @@
     <!-- Input -->
     <div class="p-4 border-t border-white/10">
       <div class="flex items-center gap-2">
-        <input type="text" [ngModel]="chatInput()" (ngModelChange)="chatInput.set($event)" (keydown)="onChatKeydown($event)" placeholder="Type a message to test..." class="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 transition-colors placeholder:text-slate-500" [disabled]="isChatLoading()" />
-        <button (click)="sendChatMessage()" [disabled]="isChatLoading() || !chatInput().trim()" class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50">
+        <input
+          type="text"
+          [ngModel]="chatInput()"
+          (ngModelChange)="chatInput.set($event)"
+          (keydown)="onChatKeydown($event)"
+          placeholder="Type a message to test..."
+          class="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary/50 transition-colors placeholder:text-slate-500"
+          [disabled]="isChatLoading()"
+        />
+        <button
+          (click)="sendChatMessage()"
+          [disabled]="isChatLoading() || !chatInput().trim()"
+          class="w-10 h-10 rounded-xl bg-primary text-white flex items-center justify-center hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
           <span class="material-symbols-outlined">send</span>
         </button>
       </div>
@@ -346,43 +569,83 @@
 
       <!-- Appearance -->
       <div class="glass-panel rounded-xl p-4 space-y-1">
-        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3">Appearance</h3>
-        <button (click)="toggleShowGrid()" class="flex items-center justify-between py-3 w-full hover:bg-white/5 rounded-lg px-2 transition-colors">
+        <h3
+          class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3"
+        >
+          Appearance
+        </h3>
+        <button
+          (click)="toggleShowGrid()"
+          class="flex items-center justify-between py-3 w-full hover:bg-white/5 rounded-lg px-2 transition-colors"
+        >
           <div>
             <p class="font-bold text-sm text-left">Show Grid</p>
-            <p class="text-xs text-slate-400">{{ showGrid() ? 'Grid dots visible on canvas' : 'Grid hidden' }}</p>
+            <p class="text-xs text-slate-400">
+              {{ showGrid() ? 'Grid dots visible on canvas' : 'Grid hidden' }}
+            </p>
           </div>
-          <div class="w-11 h-6 rounded-full relative transition-colors" [class.bg-primary]="showGrid()" [class.bg-slate-600]="!showGrid()">
-            <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-all" [class.left-5]="showGrid()" [class.left-0.5]="!showGrid()"></div>
+          <div
+            class="w-11 h-6 rounded-full relative transition-colors"
+            [class.bg-primary]="showGrid()"
+            [class.bg-slate-600]="!showGrid()"
+          >
+            <div
+              class="w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-all"
+              [class.left-5]="showGrid()"
+              [class.left-0.5]="!showGrid()"
+            ></div>
           </div>
         </button>
-        <button (click)="toggleSnapToGrid()" class="flex items-center justify-between py-3 w-full hover:bg-white/5 rounded-lg px-2 transition-colors">
+        <button
+          (click)="toggleSnapToGrid()"
+          class="flex items-center justify-between py-3 w-full hover:bg-white/5 rounded-lg px-2 transition-colors"
+        >
           <div>
             <p class="font-bold text-sm text-left">Snap to Grid</p>
-            <p class="text-xs text-slate-400">{{ snapToGrid() ? 'Nodes align to 24px grid' : 'Free positioning' }}</p>
+            <p class="text-xs text-slate-400">
+              {{ snapToGrid() ? 'Nodes align to 24px grid' : 'Free positioning'
+              }}
+            </p>
           </div>
-          <div class="w-11 h-6 rounded-full relative transition-colors" [class.bg-primary]="snapToGrid()" [class.bg-slate-600]="!snapToGrid()">
-            <div class="w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-all" [class.left-5]="snapToGrid()" [class.left-0.5]="!snapToGrid()"></div>
+          <div
+            class="w-11 h-6 rounded-full relative transition-colors"
+            [class.bg-primary]="snapToGrid()"
+            [class.bg-slate-600]="!snapToGrid()"
+          >
+            <div
+              class="w-5 h-5 bg-white rounded-full absolute top-0.5 shadow transition-all"
+              [class.left-5]="snapToGrid()"
+              [class.left-0.5]="!snapToGrid()"
+            ></div>
           </div>
         </button>
       </div>
 
       <!-- AI Backend Status -->
       <div class="glass-panel rounded-xl p-4 space-y-1">
-        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3">AI Backend</h3>
+        <h3
+          class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3"
+        >
+          AI Backend
+        </h3>
         <div class="flex items-center justify-between py-3 px-2">
           <div>
             <p class="font-bold text-sm">Model</p>
             <p class="text-xs text-slate-400">Google Generative AI</p>
           </div>
-          <span class="text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded">gemini-2.5-flash</span>
+          <span
+            class="text-xs font-mono bg-primary/10 text-primary px-2 py-1 rounded"
+            >gemini-2.5-flash</span
+          >
         </div>
         <div class="flex items-center justify-between py-3 px-2">
           <div>
             <p class="font-bold text-sm">AI Framework</p>
             <p class="text-xs text-slate-400">Vercel AI SDK</p>
           </div>
-          <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded flex items-center gap-1">
+          <span
+            class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded flex items-center gap-1"
+          >
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             Active
           </span>
@@ -390,16 +653,23 @@
         <div class="flex items-center justify-between py-3 px-2">
           <div>
             <p class="font-bold text-sm">Use Cases</p>
-            <p class="text-xs text-slate-400">Catalog · General Info · Appointments</p>
+            <p class="text-xs text-slate-400">
+              Catalog · General Info · Appointments
+            </p>
           </div>
-          <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">3/3</span>
+          <span
+            class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded"
+            >3/3</span
+          >
         </div>
         <div class="flex items-center justify-between py-3 px-2">
           <div>
             <p class="font-bold text-sm">Webhook</p>
             <p class="text-xs text-slate-400">Telegram Bot API</p>
           </div>
-          <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded flex items-center gap-1">
+          <span
+            class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded flex items-center gap-1"
+          >
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             Connected
           </span>
@@ -409,41 +679,85 @@
             <p class="font-bold text-sm">Region</p>
             <p class="text-xs text-slate-400">Cloud Functions</p>
           </div>
-          <span class="text-xs font-mono bg-slate-500/10 text-slate-400 px-2 py-1 rounded">us-central1</span>
+          <span
+            class="text-xs font-mono bg-slate-500/10 text-slate-400 px-2 py-1 rounded"
+            >us-central1</span
+          >
         </div>
       </div>
 
       <!-- Data Management -->
       <div class="glass-panel rounded-xl p-4 space-y-1">
-        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3">Data</h3>
+        <h3
+          class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-3"
+        >
+          Data
+        </h3>
         <div class="flex items-center justify-between py-3 px-2">
           <div>
             <p class="font-bold text-sm">Graph Persistence</p>
-            <p class="text-xs text-slate-400">Stored in browser localStorage + Firestore</p>
+            <p class="text-xs text-slate-400">
+              Stored in browser localStorage + Firestore
+            </p>
           </div>
-          <span class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded">Active</span>
+          <span
+            class="text-xs font-mono bg-emerald-500/10 text-emerald-400 px-2 py-1 rounded"
+            >Active</span
+          >
         </div>
-        <button (click)="nodeEditor.resetGraph()" class="flex items-center justify-between py-3 w-full hover:bg-red-500/5 rounded-lg px-2 transition-colors group">
+        <button
+          (click)="nodeEditor.resetGraph()"
+          class="flex items-center justify-between py-3 w-full hover:bg-red-500/5 rounded-lg px-2 transition-colors group"
+        >
           <div>
-            <p class="font-bold text-sm text-left group-hover:text-red-400 transition-colors">Reset Graph</p>
-            <p class="text-xs text-slate-400">Restore to default 6-node configuration</p>
+            <p
+              class="font-bold text-sm text-left group-hover:text-red-400 transition-colors"
+            >
+              Reset Graph
+            </p>
+            <p class="text-xs text-slate-400">
+              Restore to default 6-node configuration
+            </p>
           </div>
-          <span class="material-symbols-outlined text-slate-500 group-hover:text-red-400 transition-colors">restart_alt</span>
+          <span
+            class="material-symbols-outlined text-slate-500 group-hover:text-red-400 transition-colors"
+            >restart_alt</span
+          >
         </button>
-        <button (click)="clearDeployments()" class="flex items-center justify-between py-3 w-full hover:bg-red-500/5 rounded-lg px-2 transition-colors group">
+        <button
+          (click)="clearDeployments()"
+          class="flex items-center justify-between py-3 w-full hover:bg-red-500/5 rounded-lg px-2 transition-colors group"
+        >
           <div>
-            <p class="font-bold text-sm text-left group-hover:text-red-400 transition-colors">Clear Deployments</p>
-            <p class="text-xs text-slate-400">Remove all deployment history ({{ deployments().length }} records)</p>
+            <p
+              class="font-bold text-sm text-left group-hover:text-red-400 transition-colors"
+            >
+              Clear Deployments
+            </p>
+            <p class="text-xs text-slate-400">
+              Remove all deployment history ({{ deployments().length }} records)
+            </p>
           </div>
-          <span class="material-symbols-outlined text-slate-500 group-hover:text-red-400 transition-colors">delete_sweep</span>
+          <span
+            class="material-symbols-outlined text-slate-500 group-hover:text-red-400 transition-colors"
+            >delete_sweep</span
+          >
         </button>
       </div>
 
       <!-- About -->
       <div class="glass-panel rounded-xl p-4">
-        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-2">About</h3>
-        <p class="text-sm text-slate-300">DevDay Atom 2026 — Visual AI Agent Flow Editor</p>
-        <p class="text-xs text-slate-500 mt-1">Built with Angular 21 · Firebase · Vercel AI SDK · Gemini 2.5</p>
+        <h3
+          class="font-bold text-sm uppercase tracking-wider text-slate-400 mb-2"
+        >
+          About
+        </h3>
+        <p class="text-sm text-slate-300">
+          DevDay Atom 2026 — Visual AI Agent Flow Editor
+        </p>
+        <p class="text-xs text-slate-500 mt-1">
+          Built with Angular 21 · Firebase · Vercel AI SDK · Gemini 2.5
+        </p>
       </div>
     </div>
   </div>
@@ -453,44 +767,69 @@
   @if (activeTopTab() === 'flow-editor' && activeBottomTab() === 'profile') {
   <div class="absolute inset-0 overflow-y-auto p-6">
     <div class="max-w-2xl mx-auto space-y-4">
-      <div class="glass-panel rounded-xl p-6 flex flex-col items-center text-center">
-        <div class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4 ring-4 ring-primary/30">
-          <span class="material-symbols-outlined text-4xl text-primary">person</span>
+      <div
+        class="glass-panel rounded-xl p-6 flex flex-col items-center text-center"
+      >
+        <div
+          class="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mb-4 ring-4 ring-primary/30"
+        >
+          <span class="material-symbols-outlined text-4xl text-primary"
+            >person</span
+          >
         </div>
         <h2 class="text-xl font-bold">Jonathan Ixcayau</h2>
         <p class="text-sm text-slate-400 mt-1">AI Agent Developer</p>
         <div class="flex gap-6 mt-5">
           <div class="text-center">
-            <p class="text-2xl font-bold text-primary">{{ nodeEditor.nodes().length }}</p>
-            <p class="text-[10px] uppercase tracking-wider text-slate-500">Nodes</p>
+            <p class="text-2xl font-bold text-primary">
+              {{ nodeEditor ? nodeEditor.nodes().length : 0 }}
+            </p>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">
+              Nodes
+            </p>
           </div>
           <div class="w-px bg-slate-700"></div>
           <div class="text-center">
-            <p class="text-2xl font-bold text-emerald-400">{{ nodeEditor.edges().length }}</p>
-            <p class="text-[10px] uppercase tracking-wider text-slate-500">Edges</p>
+            <p class="text-2xl font-bold text-emerald-400">
+              {{ nodeEditor ? nodeEditor.edges().length : 0 }}
+            </p>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">
+              Edges
+            </p>
           </div>
           <div class="w-px bg-slate-700"></div>
           <div class="text-center">
-            <p class="text-2xl font-bold text-amber-400">{{ deployments().length }}</p>
-            <p class="text-[10px] uppercase tracking-wider text-slate-500">Deploys</p>
+            <p class="text-2xl font-bold text-amber-400">
+              {{ deployments().length }}
+            </p>
+            <p class="text-[10px] uppercase tracking-wider text-slate-500">
+              Deploys
+            </p>
           </div>
         </div>
       </div>
       <div class="glass-panel rounded-xl p-4 space-y-3">
-        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-400">Project Status</h3>
+        <h3 class="font-bold text-sm uppercase tracking-wider text-slate-400">
+          Project Status
+        </h3>
         <div class="flex justify-between py-2 px-1">
           <span class="text-sm text-slate-300">Firebase Project</span>
           <span class="text-sm font-mono text-primary">atom-dev-day</span>
         </div>
         <div class="flex justify-between py-2 px-1">
           <span class="text-sm text-slate-300">Cloud Functions</span>
-          <span class="text-sm font-mono text-emerald-400 flex items-center gap-1">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Deployed
+          <span
+            class="text-sm font-mono text-emerald-400 flex items-center gap-1"
+          >
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Deployed
           </span>
         </div>
         <div class="flex justify-between py-2 px-1">
           <span class="text-sm text-slate-300">Telegram Bot</span>
-          <span class="text-sm font-mono text-emerald-400 flex items-center gap-1">
+          <span
+            class="text-sm font-mono text-emerald-400 flex items-center gap-1"
+          >
             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Active
           </span>
         </div>
@@ -500,74 +839,117 @@
         </div>
         <div class="flex justify-between py-2 px-1">
           <span class="text-sm text-slate-300">Use Cases</span>
-          <span class="text-sm font-mono text-emerald-400">3/3 Implemented</span>
+          <span class="text-sm font-mono text-emerald-400"
+            >3/3 Implemented</span
+          >
         </div>
       </div>
     </div>
   </div>
   }
-
 </main>
 
 <!-- ==================== BOTTOM NAVIGATION ==================== -->
-<footer class="bg-white dark:bg-[#1d1b27] border-t border-slate-200 dark:border-primary/20 px-4 pb-6 pt-2 flex justify-between items-center z-30">
-<a (click)="activeBottomTab.set('editor'); activeTopTab.set('flow-editor')" 
-   class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
-   [class.text-primary]="activeBottomTab() === 'editor' && activeTopTab() === 'flow-editor'"
-   [class.text-slate-400]="activeBottomTab() !== 'editor' || activeTopTab() !== 'flow-editor'">
-<span class="material-symbols-outlined" [class.fill-icon]="activeBottomTab() === 'editor'">table_chart</span>
-<p class="text-[10px] font-bold uppercase tracking-wider">Editor</p>
-</a>
-<a (click)="activeBottomTab.set('nodes'); activeTopTab.set('flow-editor')"
-   class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
-   [class.text-primary]="activeBottomTab() === 'nodes'"
-   [class.text-slate-400]="activeBottomTab() !== 'nodes'">
-<span class="material-symbols-outlined">inventory_2</span>
-<p class="text-[10px] font-bold uppercase tracking-wider">Nodes</p>
-</a>
-<div class="flex-none px-4">
-<button (click)="deploy()" [disabled]="isDeploying()" class="w-12 h-12 bg-primary rounded-full shadow-lg shadow-primary/40 flex items-center justify-center text-white -mt-8 border-4 border-background-light dark:border-background-dark hover:scale-110 transition-transform disabled:opacity-50" title="Deploy to Firestore">
-<span class="material-symbols-outlined text-2xl" [class.animate-spin]="isDeploying()">{{ isDeploying() ? 'progress_activity' : 'bolt' }}</span>
-</button>
-</div>
-<a (click)="activeBottomTab.set('chat'); activeTopTab.set('flow-editor')"
-   class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
-   [class.text-primary]="activeBottomTab() === 'chat'"
-   [class.text-slate-400]="activeBottomTab() !== 'chat'">
-<span class="material-symbols-outlined">chat</span>
-<p class="text-[10px] font-bold uppercase tracking-wider">Chat</p>
-</a>
-<a (click)="activeBottomTab.set('settings'); activeTopTab.set('flow-editor')"
-   class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
-   [class.text-primary]="activeBottomTab() === 'settings'"
-   [class.text-slate-400]="activeBottomTab() !== 'settings'">
-<span class="material-symbols-outlined">tune</span>
-<p class="text-[10px] font-bold uppercase tracking-wider">Settings</p>
-</a>
+<footer
+  class="bg-white dark:bg-[#1d1b27] border-t border-slate-200 dark:border-primary/20 px-4 pb-6 pt-2 flex justify-between items-center z-30"
+>
+  <a
+    (click)="activeBottomTab.set('editor'); activeTopTab.set('flow-editor')"
+    class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
+    [class.text-primary]="activeBottomTab() === 'editor' && activeTopTab() === 'flow-editor'"
+    [class.text-slate-400]="activeBottomTab() !== 'editor' || activeTopTab() !== 'flow-editor'"
+  >
+    <span
+      class="material-symbols-outlined"
+      [class.fill-icon]="activeBottomTab() === 'editor'"
+      >table_chart</span
+    >
+    <p class="text-[10px] font-bold uppercase tracking-wider">Editor</p>
+  </a>
+  <a
+    (click)="activeBottomTab.set('nodes'); activeTopTab.set('flow-editor')"
+    class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
+    [class.text-primary]="activeBottomTab() === 'nodes'"
+    [class.text-slate-400]="activeBottomTab() !== 'nodes'"
+  >
+    <span class="material-symbols-outlined">inventory_2</span>
+    <p class="text-[10px] font-bold uppercase tracking-wider">Nodes</p>
+  </a>
+  <div class="flex-none px-4">
+    <button
+      (click)="deploy()"
+      [disabled]="isDeploying()"
+      class="w-12 h-12 bg-primary rounded-full shadow-lg shadow-primary/40 flex items-center justify-center text-white -mt-8 border-4 border-background-light dark:border-background-dark hover:scale-110 transition-transform disabled:opacity-50"
+      title="Deploy to Firestore"
+    >
+      <span
+        class="material-symbols-outlined text-2xl"
+        [class.animate-spin]="isDeploying()"
+        >{{ isDeploying() ? 'progress_activity' : 'bolt' }}</span
+      >
+    </button>
+  </div>
+  <a
+    (click)="activeBottomTab.set('chat'); activeTopTab.set('flow-editor')"
+    class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
+    [class.text-primary]="activeBottomTab() === 'chat'"
+    [class.text-slate-400]="activeBottomTab() !== 'chat'"
+  >
+    <span class="material-symbols-outlined">chat</span>
+    <p class="text-[10px] font-bold uppercase tracking-wider">Chat</p>
+  </a>
+  <a
+    (click)="activeBottomTab.set('settings'); activeTopTab.set('flow-editor')"
+    class="flex flex-1 flex-col items-center gap-1 cursor-pointer transition-colors"
+    [class.text-primary]="activeBottomTab() === 'settings'"
+    [class.text-slate-400]="activeBottomTab() !== 'settings'"
+  >
+    <span class="material-symbols-outlined">tune</span>
+    <p class="text-[10px] font-bold uppercase tracking-wider">Settings</p>
+  </a>
 </footer>
 
 <!-- ==================== JSON MODAL ==================== -->
 @if (showJsonModal()) {
-<div class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" (click)="closeJsonModal()">
-  <div class="glass-panel rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col shadow-2xl border-primary/20" (click)="$event.stopPropagation()">
+<div
+  class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+  (click)="closeJsonModal()"
+>
+  <div
+    class="glass-panel rounded-2xl w-full max-w-lg max-h-[80vh] overflow-hidden flex flex-col shadow-2xl border-primary/20"
+    (click)="$event.stopPropagation()"
+  >
     <div class="flex items-center justify-between p-4 border-b border-white/10">
       <h3 class="font-bold text-lg flex items-center gap-2">
         <span class="material-symbols-outlined text-primary">data_object</span>
         Graph Configuration
       </h3>
-      <button (click)="closeJsonModal()" class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors">
+      <button
+        (click)="closeJsonModal()"
+        class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
+      >
         <span class="material-symbols-outlined">close</span>
       </button>
     </div>
     <div class="flex-1 overflow-y-auto p-4">
-      <pre class="text-xs font-mono text-emerald-300 bg-black/40 rounded-xl p-4 overflow-x-auto whitespace-pre-wrap">{{ jsonOutput() }}</pre>
+      <pre
+        class="text-xs font-mono text-emerald-300 bg-black/40 rounded-xl p-4 overflow-x-auto whitespace-pre-wrap"
+      >
+{{ jsonOutput() }}</pre
+      >
     </div>
     <div class="flex gap-2 p-4 border-t border-white/10">
-      <button (click)="copyJson()" class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity">
+      <button
+        (click)="copyJson()"
+        class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white font-bold text-sm hover:opacity-90 transition-opacity"
+      >
         <span class="material-symbols-outlined text-sm">content_copy</span>
         Copy to Clipboard
       </button>
-      <button (click)="closeJsonModal()" class="px-4 py-2.5 rounded-xl bg-slate-700 text-slate-300 font-bold text-sm hover:bg-slate-600 transition-colors">
+      <button
+        (click)="closeJsonModal()"
+        class="px-4 py-2.5 rounded-xl bg-slate-700 text-slate-300 font-bold text-sm hover:bg-slate-600 transition-colors"
+      >
         Close
       </button>
     </div>
@@ -578,8 +960,12 @@
 <!-- ==================== TOAST NOTIFICATION ==================== -->
 @if (showToast()) {
 <div class="fixed top-4 right-4 z-[60] animate-slide-in">
-  <div class="glass-panel rounded-xl px-4 py-3 shadow-2xl border border-primary/30 flex items-center gap-3">
-    <span class="material-symbols-outlined text-primary text-lg">{{ toastIcon() }}</span>
+  <div
+    class="glass-panel rounded-xl px-4 py-3 shadow-2xl border border-primary/30 flex items-center gap-3"
+  >
+    <span class="material-symbols-outlined text-primary text-lg"
+      >{{ toastIcon() }}</span
+    >
     <p class="text-sm font-medium">{{ toastMessage() }}</p>
   </div>
 </div>

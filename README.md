@@ -150,7 +150,9 @@ atom-workspace/
 
 - Node.js ≥ 20
 - Firebase CLI (`npm i -g firebase-tools`)
+- pnpm (`npm i -g pnpm`)
 - Nx CLI (`npm i -g nx`)
+- [just](https://github.com/casey/just) (optional, for running repo commands)
 
 ### Local Development
 
@@ -158,15 +160,25 @@ atom-workspace/
 # Clone and install
 git clone <repo-url>
 cd atom-workspace
-npm install
+pnpm install
 
 # Start frontend dev server
-npx nx serve frontend
+pnpm exec nx serve frontend
 # → http://localhost:4200
 
 # Build backend
-npx nx build backend
+pnpm exec nx build backend
 ```
+
+### Development Workflow (using `just`)
+
+We use a [`justfile`](./justfile) to simplify running common monorepo tasks cleanly:
+
+- `just dev`: Starts the frontend development server (`http://localhost:4200`).
+- `just format`: Formats all files in the workspace.
+- `just lint`: Runs the linter across all projects.
+- `just check`: Runs the pre-commit checks (`format` and `lint`).
+- `just build`: Builds all libraries and applications for production.
 
 ### Deploy to Firebase
 

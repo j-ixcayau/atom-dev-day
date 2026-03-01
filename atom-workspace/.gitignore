@@ -46,3 +46,6 @@ Thumbs.db
 __screenshots__/
 
 backend/.env
+
+.firebase/
+firebase-debug.log
