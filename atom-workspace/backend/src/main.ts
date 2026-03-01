@@ -33,6 +33,9 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN || 'YOUR_TELEGRAM_BOT_TOKEN_HE
 const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: false });
 
 async function processMessage(sessionId: string, userMessage: string): Promise<{ response: string; intent: string }> {
+  // Capture the user's message arrival time BEFORE any AI processing
+  const userMessageTimestamp = new Date();
+
   const { messages: chatHistory, summary, userName, language } = await memoryService.getSessionData(sessionId);
 
   let graph: FlowGraph | null = null;
@@ -130,7 +133,7 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
   // 4. Summarize & Save
   const updatedState = await summarizerService.updateState(summary, userName, language, userMessage, aiResponse);
   const newMessages: Message[] = [
-    { role: 'user', content: userMessage, timestamp: new Date() },
+    { role: 'user', content: userMessage, timestamp: userMessageTimestamp },
     { role: 'assistant', content: aiResponse, timestamp: new Date() },
   ];
   await memoryService.updateSessionData(

@@ -1,6 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 
-const token = process.env.TELEGRAM_TOKEN || '8697207987:AAGOsQ7V5uL_HUb4MJiGS9sPedAH0aXYlhE';
+const token = process.env.TELEGRAM_TOKEN;
 const url = process.argv[2];
 
 if (!url) {
