@@ -25,22 +25,29 @@ export class GenericSpecialistService {
        }
     }
 
-    // [Optional/Hackathon Flex]: We still loosely load the catalog JSON if present, 
-    // so any node can magically utilize it if their prompt mentions "inventory" or "catalog"!
+    // Dynamically load data sources configured on the node via the visual editor
+    const DATA_SOURCE_MAP: Record<string, { file: string; label: string }> = {
+      autos: { file: 'autos.json', label: '[Vehicle Inventory Database]' },
+      dates: { file: 'dates.json', label: '[Available Appointment Slots]' },
+      faq:   { file: 'faq.json',   label: '[FAQ Knowledge Base]' },
+    };
+
     let inventoryContext = '';
-    try {
-       // Check if the prompt even cares about inventory
-       if (customPrompt.toLowerCase().includes('inventory') || customPrompt.toLowerCase().includes('catalog')) {
-          let dataPath = path.join(__dirname, '../assets/vehicle-catalog.json');
-          if (!fs.existsSync(dataPath)) {
-             dataPath = path.join(__dirname, 'backend/src/assets/vehicle-catalog.json');
-          }
-          if (fs.existsSync(dataPath)) {
-             inventoryContext = `\n\n[Current Database Context]\n${fs.readFileSync(dataPath, 'utf-8')}`;
-          }
-       }
-    } catch (e) {
-       // Suppress missing database errors for generic nodes
+    const dataSources: string[] = nodeData?.dataSources || [];
+    for (const sourceId of dataSources) {
+      const source = DATA_SOURCE_MAP[sourceId];
+      if (!source) continue;
+      try {
+        let dataPath = path.join(__dirname, `../assets/${source.file}`);
+        if (!fs.existsSync(dataPath)) {
+          dataPath = path.join(__dirname, `backend/src/assets/${source.file}`);
+        }
+        if (fs.existsSync(dataPath)) {
+          inventoryContext += `\n\n${source.label}\n${fs.readFileSync(dataPath, 'utf-8')}`;
+        }
+      } catch (e) {
+        // Suppress missing data source errors gracefully
+      }
     }
 
     // 2. Build the System Prompt

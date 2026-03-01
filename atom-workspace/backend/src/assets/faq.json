@@ -1,0 +1,284 @@
+{
+  "faq_agencia_autos": [
+    {
+      "categoria": "Vehículos y Modelos",
+      "preguntas": [
+        {
+          "id": 1,
+          "pregunta": "¿Tienen autos para entrega inmediata?",
+          "respuesta": "Contamos con un inventario selecto de unidades listas para salir. Si el modelo exacto no está disponible, el tiempo de espera promedio es de [X] semanas."
+        },
+        {
+          "id": 2,
+          "pregunta": "¿Puedo realizar una prueba de manejo (Test Drive)?",
+          "respuesta": "¡Por supuesto! Solo necesitas presentar tu licencia de conducir vigente. Te recomendamos agendarla previamente para asegurar la disponibilidad del modelo."
+        },
+        {
+          "id": 3,
+          "pregunta": "¿Qué garantía ofrecen en autos nuevos?",
+          "respuesta": "Nuestros autos nuevos cuentan con una garantía de fábrica de [X] años o [X,000] kilómetros, lo que ocurra primero."
+        },
+        {
+          "id": 4,
+          "pregunta": "¿Venden autos seminuevos?",
+          "respuesta": "Sí, contamos con un departamento de seminuevos certificados que han pasado por una revisión de más de 100 puntos mecánicos y legales."
+        },
+        {
+          "id": 5,
+          "pregunta": "¿Los autos seminuevos tienen garantía?",
+          "respuesta": "Sí, ofrecemos una garantía limitada de [X] meses en motor y transmisión para tu tranquilidad."
+        },
+        {
+          "id": 6,
+          "pregunta": "¿Qué incluye el equipamiento de seguridad de serie?",
+          "respuesta": "La mayoría de nuestras unidades base incluyen frenos ABS, control de estabilidad y un mínimo de 6 bolsas de aire."
+        },
+        {
+          "id": 7,
+          "pregunta": "¿Tienen modelos híbridos o eléctricos?",
+          "respuesta": "Sí, contamos con opciones de movilidad sustentable. Pregunta por nuestra línea [Nombre de la línea]."
+        },
+        {
+          "id": 8,
+          "pregunta": "¿Cuál es el consumo de combustible real de este modelo?",
+          "respuesta": "El rendimiento varía según el hábito de manejo, pero el promedio combinado es de aproximadamente 15 km/l."
+        },
+        {
+          "id": 9,
+          "pregunta": "¿Puedo personalizar el color o los accesorios de mi auto?",
+          "respuesta": "Sí, ofrecemos un catálogo de accesorios originales y diferentes niveles de equipamiento (trim levels)."
+        },
+        {
+          "id": 10,
+          "pregunta": "¿Cómo sé qué modelo se adapta mejor a mis necesidades?",
+          "respuesta": "Nuestros asesores pueden realizar un análisis de uso para recomendarte entre un sedán, SUV o pickup."
+        }
+      ]
+    },
+    {
+      "categoria": "Financiamiento y Pagos",
+      "preguntas": [
+        {
+          "id": 11,
+          "pregunta": "¿Qué requisitos necesito para un crédito automotriz?",
+          "respuesta": "Identificación oficial, comprobante de domicilio, comprobante de ingresos de los últimos 3 meses y una solicitud de crédito firmada."
+        },
+        {
+          "id": 12,
+          "pregunta": "¿Cuál es el enganche mínimo?",
+          "respuesta": "Manejamos planes desde el 10% o 20% de enganche, dependiendo del perfil crediticio del cliente."
+        },
+        {
+          "id": 13,
+          "pregunta": "¿Ofrecen planes para personas sin historial crediticio?",
+          "respuesta": "Sí, tenemos convenios con financieras que aceptan primeros compradores, usualmente con un enganche un poco más alto."
+        },
+        {
+          "id": 14,
+          "pregunta": "¿Puedo dar aportaciones a capital sin penalización?",
+          "respuesta": "Sí, la mayoría de nuestros planes permiten pagos anticipados para reducir el plazo o la mensualidad sin cargos extra."
+        },
+        {
+          "id": 15,
+          "pregunta": "¿Qué plazos de financiamiento manejan?",
+          "respuesta": "Desde 12 hasta 60 o 72 meses."
+        },
+        {
+          "id": 16,
+          "pregunta": "¿Tienen opciones de Arrendamiento (Leasing)?",
+          "respuesta": "Sí, ideal para personas físicas con actividad empresarial o empresas que buscan deducibilidad fiscal."
+        },
+        {
+          "id": 17,
+          "pregunta": "¿Puedo comprar un auto si estoy en Buró de Crédito?",
+          "respuesta": "Depende de la gravedad del reporte. Contamos con planes especiales que analizan cada caso individualmente."
+        },
+        {
+          "id": 18,
+          "pregunta": "¿Qué tasa de interés manejan?",
+          "respuesta": "La tasa depende del plazo y el perfil del cliente, pero nuestras tasas competitivas inician desde el [X]%."
+        },
+        {
+          "id": 19,
+          "pregunta": "¿Aceptan pagos con tarjeta de crédito?",
+          "respuesta": "Aceptamos tarjetas para el apartado o el enganche (pueden aplicar comisiones bancarias)."
+        },
+        {
+          "id": 20,
+          "pregunta": "¿Puedo liquidar mi crédito antes de tiempo?",
+          "respuesta": "Totalmente. Puedes liquidar el saldo insoluto en cualquier momento después del primer mes."
+        }
+      ]
+    },
+    {
+      "categoria": "Toma de Auto a Cuenta",
+      "preguntas": [
+        {
+          "id": 21,
+          "pregunta": "¿Aceptan mi auto actual como parte del pago?",
+          "respuesta": "Sí, recibimos unidades de casi todas las marcas previa inspección mecánica y legal."
+        },
+        {
+          "id": 22,
+          "pregunta": "¿Cómo valúan mi auto?",
+          "respuesta": "Nos basamos en guías oficiales de precios de mercado y el estado físico/mecánico de tu vehículo."
+        },
+        {
+          "id": 23,
+          "pregunta": "¿Tienen algún costo el avalúo de mi auto?",
+          "respuesta": "No, el diagnóstico y la oferta de compra son totalmente gratuitos."
+        },
+        {
+          "id": 24,
+          "pregunta": "¿Aceptan autos que aún se están pagando?",
+          "respuesta": "Sí, nosotros podemos liquidar tu deuda actual y la diferencia se aplica a tu nuevo auto."
+        },
+        {
+          "id": 25,
+          "pregunta": "¿Qué documentos debo entregar de mi auto usado?",
+          "respuesta": "Factura original (o secuencia de facturas), tenencias pagadas, verificación vigente y baja de placas si aplica."
+        }
+      ]
+    },
+    {
+      "categoria": "Servicio y Postventa",
+      "preguntas": [
+        {
+          "id": 26,
+          "pregunta": "¿Cada cuánto debo traer mi auto a servicio?",
+          "respuesta": "Generalmente cada 10,000 km o cada 6 meses, lo que ocurra primero."
+        },
+        {
+          "id": 27,
+          "pregunta": "¿Puedo agendar mi cita de servicio en línea?",
+          "respuesta": "Sí, a través de nuestra página web o vía WhatsApp."
+        },
+        {
+          "id": 28,
+          "pregunta": "¿Tienen venta de refacciones originales?",
+          "respuesta": "Sí, contamos con un mostrador de refacciones legítimas con garantía de marca."
+        },
+        {
+          "id": 29,
+          "pregunta": "¿Qué pasa si pierdo mi garantía?",
+          "respuesta": "La garantía se mantiene vigente siempre que realices los servicios preventivos en talleres autorizados."
+        },
+        {
+          "id": 30,
+          "pregunta": "¿Ofrecen servicio de hojalatería y pintura?",
+          "respuesta": "Contamos con un centro de colisión especializado con igualación de color computarizada."
+        },
+        {
+          "id": 31,
+          "pregunta": "¿Tienen autos de cortesía si el mío tarda mucho en el taller?",
+          "respuesta": "Sujeto a disponibilidad y dependiendo del tipo de reparación cubierta por garantía."
+        },
+        {
+          "id": 32,
+          "pregunta": "¿Puedo comprar una extensión de garantía?",
+          "respuesta": "Sí, ofrecemos pólizas para extender la protección de tu auto por 1 o 2 años adicionales."
+        },
+        {
+          "id": 33,
+          "pregunta": "¿Cuál es el costo de los servicios de mantenimiento?",
+          "respuesta": "Tenemos precios estandarizados por kilometraje. Puedes consultarlos en nuestra recepción de servicio."
+        },
+        {
+          "id": 34,
+          "pregunta": "¿Hacen alineación y balanceo?",
+          "respuesta": "Sí, contamos con equipo de última generación para el mantenimiento de tu suspensión y llantas."
+        },
+        {
+          "id": 35,
+          "pregunta": "¿Venden neumáticos en la agencia?",
+          "respuesta": "Sí, manejamos las marcas principales recomendadas para tu vehículo."
+        }
+      ]
+    },
+    {
+      "categoria": "Trámites y Documentación",
+      "preguntas": [
+        {
+          "id": 36,
+          "pregunta": "¿Ustedes realizan el trámite de placas?",
+          "respuesta": "Sí, nuestro departamento de gestoría puede encargarse del alta de placas y registro vehicular."
+        },
+        {
+          "id": 37,
+          "pregunta": "¿Cuánto tiempo tarda la entrega después de pagar?",
+          "respuesta": "Si la unidad está en stock, el proceso de preparación y trámites toma entre 3 y 5 días hábiles."
+        },
+        {
+          "id": 38,
+          "pregunta": "¿El auto ya incluye el seguro?",
+          "respuesta": "En ventas a crédito, el seguro es obligatorio. Podemos financiarlo o puedes pagarlo de contado el primer año."
+        },
+        {
+          "id": 39,
+          "pregunta": "¿Puedo elegir mi propia aseguradora?",
+          "respuesta": "Sí, siempre y cuando la póliza cumpla con los requisitos de cobertura solicitados por la financiera."
+        },
+        {
+          "id": 40,
+          "pregunta": "¿Qué es la Factura de Origen?",
+          "respuesta": "Es el documento legal que acredita la primera propiedad del vehículo emitida por la planta o distribuidor."
+        },
+        {
+          "id": 41,
+          "pregunta": "¿Cómo funciona el proceso de apartado?",
+          "respuesta": "Con un monto mínimo puedes reservar la unidad por un periodo de [X] días mientras se autoriza tu crédito."
+        },
+        {
+          "id": 42,
+          "pregunta": "¿Me ayudan con la baja de mis placas anteriores?",
+          "respuesta": "Sí, ofrecemos servicio de gestoría para trámites de baja y cambio de propietario."
+        },
+        {
+          "id": 43,
+          "pregunta": "¿Qué impuestos debo pagar al comprar un auto nuevo?",
+          "respuesta": "El precio ya incluye el IVA, pero se debe considerar el ISAN (Impuesto Sobre Autos Nuevos) y los derechos de control vehicular."
+        },
+        {
+          "id": 44,
+          "pregunta": "¿Puedo facturar a nombre de una empresa?",
+          "respuesta": "Sí, solo necesitamos tu Constancia de Situación Fiscal actualizada."
+        },
+        {
+          "id": 45,
+          "pregunta": "¿Entregan el auto con el tanque lleno?",
+          "respuesta": "Nuestra política es entregar la unidad con una cantidad de cortesía (aprox. 1/4 de tanque), pero puedes solicitar el llenado previo pago."
+        }
+      ]
+    },
+    {
+      "categoria": "Dudas Generales",
+      "preguntas": [
+        {
+          "id": 46,
+          "pregunta": "¿Tienen promociones este mes?",
+          "respuesta": "Constantemente tenemos bonos de descuento, seguros gratis o comisiones por apertura al 0%. ¡Pregúntanos por la promoción vigente!"
+        },
+        {
+          "id": 47,
+          "pregunta": "¿Hacen entregas a domicilio?",
+          "respuesta": "Sí, bajo ciertas condiciones podemos llevar tu auto nuevo hasta la puerta de tu casa."
+        },
+        {
+          "id": 48,
+          "pregunta": "¿Qué es el sistema de infoentretenimiento que incluye?",
+          "respuesta": "La mayoría de nuestros modelos cuentan con pantallas táctiles compatibles con Apple CarPlay y Android Auto."
+        },
+        {
+          "id": 49,
+          "pregunta": "¿El auto tiene asistencia en el camino?",
+          "respuesta": "Sí, la mayoría de nuestras unidades nuevas incluyen un programa de asistencia (grúa, cerrajero, gasolina) por los primeros años."
+        },
+        {
+          "id": 50,
+          "pregunta": "¿Tienen programas de lealtad por recomendar a alguien?",
+          "respuesta": "Sí, pregunta por nuestro programa de referidos donde puedes obtener beneficios en tu próximo servicio."
+        }
+      ]
+    }
+  ]
+}

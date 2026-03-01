@@ -23,6 +23,7 @@ export interface NodeData {
   requiredFields?: string[];
   outputLabels?: string[];
   actions?: NodeAction[];
+  dataSources?: string[];
 }
 
 export interface WorkflowNode {
@@ -88,6 +89,7 @@ const NODE_DEFAULTS: Record<
       prompt:
         'You are a knowledgeable car sales specialist. Use the extracted data to search the inventory and format an enthusiastic, helpful response.',
       model: 'gemini-2.5-flash',
+      dataSources: ['autos'],
     },
   },
   generic: {
@@ -296,6 +298,9 @@ export class NodeEditor {
           : undefined,
         requiredFields: defaults.data.requiredFields
           ? [...defaults.data.requiredFields]
+          : undefined,
+        dataSources: defaults.data.dataSources
+          ? [...defaults.data.dataSources]
           : undefined,
       },
     };

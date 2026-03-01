@@ -96,6 +96,7 @@ export class App implements OnInit, AfterViewInit {
   selectedNode = signal<WorkflowNode | null>(null);
   editingPrompt = signal('');
   editingModel = signal('gemini-2.5-flash');
+  editingDataSources = signal<string[]>([]);
 
   // Chat testing
   chatMessages = signal<ChatMessage[]>([]);
@@ -129,6 +130,13 @@ export class App implements OnInit, AfterViewInit {
     { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
     { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
     { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+  ];
+
+  // Available data sources for node context injection
+  readonly availableDataSources = [
+    { id: 'autos', label: 'Vehicle Inventory', icon: 'directions_car' },
+    { id: 'dates', label: 'Appointment Slots', icon: 'calendar_month' },
+    { id: 'faq', label: 'FAQ Knowledge Base', icon: 'quiz' },
   ];
 
   // All node types for toolbox
@@ -292,6 +300,7 @@ export class App implements OnInit, AfterViewInit {
     if (node) {
       this.editingPrompt.set(node.data.prompt || '');
       this.editingModel.set(node.data.model || 'gemini-2.5-flash');
+      this.editingDataSources.set(node.data.dataSources ? [...node.data.dataSources] : []);
     }
   }
 
@@ -302,8 +311,22 @@ export class App implements OnInit, AfterViewInit {
     this.nodeEditor.updateNodeData(node.id, {
       prompt: this.editingPrompt(),
       model: this.editingModel(),
+      dataSources: this.editingDataSources().length > 0 ? [...this.editingDataSources()] : undefined,
     });
     this.showNotification('💾 Node properties saved', 'save');
+  }
+
+  toggleDataSource(id: string) {
+    const current = this.editingDataSources();
+    if (current.includes(id)) {
+      this.editingDataSources.set(current.filter(s => s !== id));
+    } else {
+      this.editingDataSources.set([...current, id]);
+    }
+  }
+
+  isDataSourceActive(id: string): boolean {
+    return this.editingDataSources().includes(id);
   }
 
   closeProperties() {

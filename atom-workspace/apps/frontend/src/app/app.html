@@ -339,6 +339,37 @@
           ></textarea>
         </div>
 
+        <!-- Data Sources (Specialist, Generic, Validator nodes) -->
+        @if (['specialist', 'generic', 'validator'].includes(selectedNode()!.type)) {
+        <div>
+          <label
+            class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block"
+            >Data Sources</label
+          >
+          <p class="text-[9px] text-slate-500 mb-2">Select JSON data to inject as context for this node.</p>
+          <div class="flex flex-col gap-1.5">
+            @for (ds of availableDataSources; track ds.id) {
+            <button
+              (click)="toggleDataSource(ds.id)"
+              class="flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-semibold transition-all"
+              [class.bg-primary/15]="isDataSourceActive(ds.id)"
+              [class.border-primary/40]="isDataSourceActive(ds.id)"
+              [class.text-primary]="isDataSourceActive(ds.id)"
+              [class.bg-black/20]="!isDataSourceActive(ds.id)"
+              [class.border-white/10]="!isDataSourceActive(ds.id)"
+              [class.text-slate-400]="!isDataSourceActive(ds.id)"
+            >
+              <span class="material-symbols-outlined text-[16px]">{{ ds.icon }}</span>
+              <span>{{ ds.label }}</span>
+              @if (isDataSourceActive(ds.id)) {
+                <span class="material-symbols-outlined text-[14px] ml-auto">check_circle</span>
+              }
+            </button>
+            }
+          </div>
+        </div>
+        }
+
         <!-- Required Fields (Validator nodes) -->
         @if (selectedNode()!.data.requiredFields) {
         <div>
