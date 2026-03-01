@@ -66,6 +66,7 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
 
   // 1. Ask Orchestrator to output ONE of the user's custom visual labels
   const intent = await orchestrator.classifyIntent(enhancedSummary, userName, userMessage, orchestratorNode.data);
+  console.log(`[Pipeline] Session=${sessionId} | Intent="${intent}" | Message="${userMessage.substring(0, 80)}"`);
   
   // 2. Resolve Graph Connections!
   let nextNodeId = flowEngine.findNextNodeId(graph, orchestratorNode.id, intent);
@@ -88,6 +89,7 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
         const nodeData = targetNode.data || {};
 
         if (nodeType === 'validator') {
+             console.log(`[Pipeline] Entering Validator node "${targetNode.title || targetNode.id}"`);
              // Run dynamically generated Zod Array validation
              const validation = await genericValidator.validateRequest(chatHistory, userMessage, enhancedSummary, userName, nodeData);
              if (!validation.isValid && validation.missingInfoMessage) {
@@ -97,6 +99,7 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
              } else if (validation.extractedData) {
                  // Success! Save the data to pass to the sequential node (if one exists)
                  activeExtractedData = { ...activeExtractedData, ...validation.extractedData };
+                 console.log(`[Pipeline] Validator passed. Extracted data:`, JSON.stringify(activeExtractedData));
                  // Traverse to the *next* node in the visual UI linked from this Validator
                  nextNodeId = flowEngine.findNextNodeId(graph, targetNode.id); 
                  
@@ -107,19 +110,22 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
              }
         } 
         else if (nodeType === 'specialist') {
+             console.log(`[Pipeline] Entering Specialist node "${targetNode.title || targetNode.id}" with data:`, JSON.stringify(activeExtractedData));
              // Execute attached Actions FIRST so we can report success/failure to the user
              const actionResults: { type: string; success: boolean }[] = [];
              if (nodeData.actions && nodeData.actions.length > 0) {
                  for (const action of nodeData.actions) {
                      const success = await actionRunner.executeAction(action, activeExtractedData, userName);
                      actionResults.push({ type: action.type, success });
-                 }
+                     console.log(`[Pipeline] Action "${action.type}" result: ${success ? '✅ SUCCESS' : '❌ FAILED'}`);
+                  }
              }
              // Run text generation, injecting action results so the LLM knows whether booking succeeded
              aiResponse = await genericSpecialist.generateResponse(activeExtractedData, userName, nodeData, actionResults);
              nextNodeId = null; // Execution finishes at specialists
         } 
         else if (nodeType === 'generic') {
+             console.log(`[Pipeline] Entering Generic node "${targetNode.title || targetNode.id}"`);
              // Basic fallback
              aiResponse = await genericService.generateResponse(chatHistory, userMessage, enhancedSummary, userName);
              nextNodeId = null;

@@ -27,6 +27,8 @@ export class GenericValidatorService {
     const customPrompt = nodeData?.prompt || 'You are a data validation agent. Extract the required parameters.';
     const modelId = nodeData?.model || 'gemini-2.5-flash';
 
+    console.log(`[GenericValidator] Processing with requiredFields: [${requiredFields.join(', ')}]`);
+
     // 1. Build a dynamic Zod schema based ONLY on what the user configured in the UI!
     const schemaShape: Record<string, any> = {
        missingInformationResponse: z.string().optional().describe('If ANY required parameter is missing, write a polite, conversational request asking the user for exactly what is missing.'),
@@ -41,9 +43,19 @@ export class GenericValidatorService {
 
     const ValidatorSchema = z.object(schemaShape);
 
-    // 2. Build the System Prompt
+    // 2. Build the System Prompt — includes current date so the LLM can resolve relative dates
+    const now = new Date();
+    const todayISO = now.toISOString().split('T')[0]; // e.g. "2026-03-01"
+    const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' }); // e.g. "Saturday"
+
     const systemPrompt = `
 ${customPrompt}
+
+IMPORTANT CONTEXT:
+- Today's date is ${todayISO} (${dayOfWeek}).
+- The current year is ${now.getFullYear()}.
+- When the user says "this Tuesday", "tomorrow", "next week", etc., resolve it relative to today's date (${todayISO}).
+- ALL dates must be output in ISO format YYYY-MM-DD.
 
 User Name: ${userName || 'Unknown'}
 Conversation Summary: ${summary || 'None'}
@@ -67,6 +79,8 @@ If ANY of those fields are missing, you MUST provide a missingInformationRespons
         messages: messagesToSend,
       });
 
+      console.log('[GenericValidator] Raw LLM output:', JSON.stringify(object));
+
       // 3. Evaluate if ALL required fields were found
       let isValid = true;
       const extractedData: Record<string, string> = {};
@@ -74,10 +88,14 @@ If ANY of those fields are missing, you MUST provide a missingInformationRespons
       for (const field of requiredFields) {
          if (!object[`has_${field}`]) {
             isValid = false;
+            console.log(`[GenericValidator] Missing field: ${field}`);
          } else if (object[`extracted_${field}`]) {
             extractedData[field] = String(object[`extracted_${field}`]);
+            console.log(`[GenericValidator] Extracted ${field} = "${extractedData[field]}"`);
          }
       }
+
+      console.log(`[GenericValidator] Result: isValid=${isValid}, extractedData=${JSON.stringify(extractedData)}`);
 
       return {
         isValid,
