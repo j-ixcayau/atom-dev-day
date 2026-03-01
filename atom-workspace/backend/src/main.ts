@@ -9,6 +9,7 @@ import { GeneralInfoService } from './services/general-info.service';
 import { AppointmentService } from './services/appointment.service';
 import { MemoryService, Message } from './services/memory.service';
 import { SummarizerService } from './services/summarizer.service';
+import { GenericService } from './services/generic.service';
 
 // Initialize Firebase Admin (if not already initialized by MemoryService)
 if (admin.apps.length === 0) {
@@ -23,6 +24,7 @@ const generalInfoService = new GeneralInfoService();
 const appointmentService = new AppointmentService();
 const memoryService = new MemoryService();
 const summarizerService = new SummarizerService();
+const genericService = new GenericService();
 
 /**
  * Configure the Telegram bot.
@@ -164,12 +166,12 @@ export const webChat = functions.https.onRequest(async (request, response) => {
       }
       case 'GENERIC':
       default:
-        if (!userName) {
-          aiResponse =
-            "Hello! 👋 I'm your Atom Auto assistant. Before we begin, may I ask for your name?";
-        } else {
-          aiResponse = `Hello ${userName}! 👋 I'm your Atom Auto assistant. I can help you:\n\n🚗 Search our vehicle catalog\n📅 Schedule a test drive or consultation\nℹ️ Answer questions about financing, warranties, and more\n\nWhat would you like to do?`;
-        }
+        aiResponse = await genericService.generateResponse(
+          chatHistory,
+          message,
+          summary,
+          userName,
+        );
         break;
     }
 
@@ -297,12 +299,12 @@ export const telegramWebhook = functions.https.onRequest(
 
           case 'GENERIC':
           default:
-            if (!userName) {
-              finalAIResponseText =
-                "Hello! 👋 I'm your Atom Auto assistant. Before we begin, may I ask for your name?";
-            } else {
-              finalAIResponseText = `Hello ${userName}! 👋 I'm your Atom Auto assistant. I can help you:\n\n🚗 Search our vehicle catalog\n📅 Schedule a test drive or consultation\nℹ️ Answer questions about financing, warranties, and more\n\nWhat would you like to do?`;
-            }
+            finalAIResponseText = await genericService.generateResponse(
+              chatHistory,
+              userMessage,
+              summary,
+              userName,
+            );
             break;
         }
 

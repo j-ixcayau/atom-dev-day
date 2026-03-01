@@ -50,10 +50,16 @@ Current Known Name: ${currentUserName || 'None'}
         }),
       });
 
-      return {
+      const result = {
         summary: object.summary,
-        userName: object.userName,
+        userName: object.userName || currentUserName, // Fallback to currentUserName if LLM returns null
       };
+
+      console.log('[Summarizer] LLM Input (Known Name):', currentUserName);
+      console.log('[Summarizer] LLM Output (Name):', object.userName);
+      console.log('[Summarizer] Final State returned:', result);
+
+      return result;
     } catch (error) {
       console.error('Error updating summary:', error);
       // Fallback to existing state on error
