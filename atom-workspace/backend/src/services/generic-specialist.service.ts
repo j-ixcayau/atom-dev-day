@@ -1,5 +1,7 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import * as admin from 'firebase-admin';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -9,6 +11,7 @@ export class GenericSpecialistService {
    * visual Node Editor, injecting the variables extracted by the parent Validator node.
    */
   async generateResponse(
+    userMessage: string,
     extractedData: Record<string, string>,
     userName: string | null,
     nodeData: any, // The specific node's data from the visual graph
@@ -26,28 +29,59 @@ export class GenericSpecialistService {
        }
     }
 
-    // Dynamically load data sources configured on the node via the visual editor
-    const DATA_SOURCE_MAP: Record<string, { file: string; label: string }> = {
-      autos: { file: 'autos.json', label: '[Vehicle Inventory Database]' },
-      dates: { file: 'dates.json', label: '[Available Appointment Slots]' },
-      faq:   { file: 'faq.json',   label: '[FAQ Knowledge Base]' },
+    // Dynamically query Vector DB for selected data sources
+    const DATA_SOURCE_MAP: Record<string, { label: string }> = {
+      autos: { label: '[Vehicle Inventory Database]' },
+      dates: { label: '[Available Appointment Slots]' },
+      faq:   { label: '[FAQ Knowledge Base]' },
     };
 
     let inventoryContext = '';
     const dataSources: string[] = nodeData?.dataSources || [];
-    for (const sourceId of dataSources) {
-      const source = DATA_SOURCE_MAP[sourceId];
-      if (!source) continue;
+    
+    if (dataSources.length > 0) {
       try {
-        let dataPath = path.join(__dirname, `../assets/${source.file}`);
-        if (!fs.existsSync(dataPath)) {
-          dataPath = path.join(__dirname, `backend/src/assets/${source.file}`);
+        // 2a. Embed the user's message
+        const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
+        const embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+        const result = await embeddingModel.embedContent(userMessage);
+        const queryEmbedding = result.embedding.values;
+
+        const db = admin.firestore();
+        const knowledgeBaseRef = db.collection('knowledge_base');
+
+        for (const sourceId of dataSources) {
+          if (sourceId === 'dates') {
+            // Dates isn't vectorized, fallback to raw ingestion for dates
+            let dataPath = path.join(__dirname, `../assets/dates.json`);
+            if (!fs.existsSync(dataPath)) {
+              dataPath = path.join(__dirname, `backend/src/assets/dates.json`);
+            }
+            if (fs.existsSync(dataPath)) {
+              inventoryContext += `\n\n${DATA_SOURCE_MAP[sourceId].label}\n${fs.readFileSync(dataPath, 'utf-8')}`;
+            }
+            continue;
+          }
+
+          // RAG retrieval: Find closest matches for the user's query
+          const matches = await knowledgeBaseRef
+            .where('source', '==', sourceId)
+            // @ts-ignore
+            .findNearest('embedding', admin.firestore.FieldValue.vector(queryEmbedding), {
+               limit: 3,
+               distanceMeasure: 'COSINE' 
+            })
+            .get();
+            
+          if (!matches.empty) {
+            inventoryContext += `\n\n${DATA_SOURCE_MAP[sourceId]?.label || '[Related Context]'}\n`;
+            matches.forEach(doc => {
+              inventoryContext += `${doc.data()['content']}\n\n`;
+            });
+          }
         }
-        if (fs.existsSync(dataPath)) {
-          inventoryContext += `\n\n${source.label}\n${fs.readFileSync(dataPath, 'utf-8')}`;
-        }
-      } catch (e) {
-        // Suppress missing data source errors gracefully
+      } catch (err) {
+        console.error('[RAG Engine] Error querying vector database', err);
       }
     }
 

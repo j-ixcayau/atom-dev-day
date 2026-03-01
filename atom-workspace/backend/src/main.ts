@@ -121,7 +121,7 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
                   }
              }
              // Run text generation, injecting action results so the LLM knows whether booking succeeded
-             aiResponse = await genericSpecialist.generateResponse(activeExtractedData, userName, nodeData, actionResults);
+             aiResponse = await genericSpecialist.generateResponse(userMessage, activeExtractedData, userName, nodeData, actionResults);
              nextNodeId = null; // Execution finishes at specialists
         } 
         else if (nodeType === 'generic') {
