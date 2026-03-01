@@ -19,6 +19,7 @@ import {
   WorkflowNode,
   NodeType,
 } from '../../components/node-editor';
+import { MarkdownPipe } from './markdown.pipe';
 
 export interface DeploymentRecord {
   id: string;
@@ -41,6 +42,7 @@ export interface ChatMessage {
     UpperCasePipe,
     FormsModule,
     NodeEditor,
+    MarkdownPipe,
   ],
   selector: 'app-root',
   templateUrl: './app.html',
@@ -97,6 +99,8 @@ export class App implements OnInit, AfterViewInit {
   editingPrompt = signal('');
   editingModel = signal('gemini-2.5-flash');
   editingDataSources = signal<string[]>([]);
+  editingRequiredFields = signal<string[]>([]);
+  newFieldName = signal('');
 
   // Chat testing
   chatMessages = signal<ChatMessage[]>([]);
@@ -301,6 +305,8 @@ export class App implements OnInit, AfterViewInit {
       this.editingPrompt.set(node.data.prompt || '');
       this.editingModel.set(node.data.model || 'gemini-2.5-flash');
       this.editingDataSources.set(node.data.dataSources ? [...node.data.dataSources] : []);
+      this.editingRequiredFields.set(node.data.requiredFields ? [...node.data.requiredFields] : []);
+      this.newFieldName.set('');
     }
   }
 
@@ -312,6 +318,7 @@ export class App implements OnInit, AfterViewInit {
       prompt: this.editingPrompt(),
       model: this.editingModel(),
       dataSources: this.editingDataSources().length > 0 ? [...this.editingDataSources()] : undefined,
+      requiredFields: this.editingRequiredFields().length > 0 ? [...this.editingRequiredFields()] : undefined,
     });
     this.showNotification('💾 Node properties saved', 'save');
   }
@@ -327,6 +334,20 @@ export class App implements OnInit, AfterViewInit {
 
   isDataSourceActive(id: string): boolean {
     return this.editingDataSources().includes(id);
+  }
+
+  addRequiredField() {
+    const name = this.newFieldName().trim();
+    if (!name) return;
+    const current = this.editingRequiredFields();
+    if (!current.includes(name)) {
+      this.editingRequiredFields.set([...current, name]);
+    }
+    this.newFieldName.set('');
+  }
+
+  removeRequiredField(field: string) {
+    this.editingRequiredFields.set(this.editingRequiredFields().filter(f => f !== field));
   }
 
   closeProperties() {

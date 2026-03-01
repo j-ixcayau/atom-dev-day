@@ -371,19 +371,45 @@
         }
 
         <!-- Required Fields (Validator nodes) -->
-        @if (selectedNode()!.data.requiredFields) {
+        @if (selectedNode()!.type === 'validator') {
         <div>
           <label
             class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5 block"
             >Required Fields</label
           >
-          <div class="flex flex-wrap gap-1.5">
-            @for (field of selectedNode()!.data.requiredFields; track field) {
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            @for (field of editingRequiredFields(); track field) {
             <span
-              class="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md text-[10px] font-mono font-bold uppercase"
-              >{{ field }}</span
+              class="px-2 py-1 bg-emerald-500/10 text-emerald-400 rounded-md text-[10px] font-mono font-bold uppercase flex items-center gap-1 group"
             >
+              {{ field }}
+              <button
+                (click)="removeRequiredField(field)"
+                class="text-emerald-400/50 hover:text-red-400 transition-colors ml-0.5"
+                title="Remove field"
+              >
+                <span class="material-symbols-outlined text-[12px]">close</span>
+              </button>
+            </span>
             }
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input
+              type="text"
+              [ngModel]="newFieldName()"
+              (ngModelChange)="newFieldName.set($event)"
+              (keydown.enter)="addRequiredField()"
+              placeholder="e.g. preferredDate"
+              class="flex-1 bg-black/30 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs font-mono focus:outline-none focus:border-emerald-500/50 transition-colors placeholder:text-slate-600"
+            />
+            <button
+              (click)="addRequiredField()"
+              [disabled]="!newFieldName().trim()"
+              class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center hover:bg-emerald-500/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              title="Add field"
+            >
+              <span class="material-symbols-outlined text-[16px]">add</span>
+            </button>
           </div>
         </div>
         }
@@ -703,8 +729,12 @@
           [class.glass-panel]="msg.role === 'assistant'"
           [class.rounded-bl-md]="msg.role === 'assistant'"
         >
-          {{ msg.content }}
-        </div>
+          @if (msg.role === 'assistant') {
+            <div [innerHTML]="msg.content | markdown"></div>
+          } @else {
+            {{ msg.content }}
+          }
+      </div>
       </div>
       } @if (isChatLoading()) {
       <div class="flex justify-start">

@@ -104,14 +104,16 @@ async function processMessage(sessionId: string, userMessage: string): Promise<{
              }
         } 
         else if (nodeType === 'specialist') {
-             // Run text generation using visually defined prompt, natively injecting variables from prior Validators
-             aiResponse = await genericSpecialist.generateResponse(activeExtractedData, userName, nodeData);
-             // Execute attached Actions!
+             // Execute attached Actions FIRST so we can report success/failure to the user
+             const actionResults: { type: string; success: boolean }[] = [];
              if (nodeData.actions && nodeData.actions.length > 0) {
                  for (const action of nodeData.actions) {
-                     await actionRunner.executeAction(action, activeExtractedData, userName);
+                     const success = await actionRunner.executeAction(action, activeExtractedData, userName);
+                     actionResults.push({ type: action.type, success });
                  }
              }
+             // Run text generation, injecting action results so the LLM knows whether booking succeeded
+             aiResponse = await genericSpecialist.generateResponse(activeExtractedData, userName, nodeData, actionResults);
              nextNodeId = null; // Execution finishes at specialists
         } 
         else if (nodeType === 'generic') {
