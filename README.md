@@ -4,6 +4,11 @@
 
 Build, configure, and test multi-agent conversational flows visually. Connect specialized AI agents that handle vehicle catalog searches, appointment scheduling, and general inquiries — all powered by **Google Gemini** and deployable to **Telegram** via **Firebase Cloud Functions**.
 
+## 🌍 Live Demos
+
+- **Web App**: [https://atom-dev-day.ixcayau.com](https://atom-dev-day.ixcayau.com)
+- **Telegram Client**: [https://t.me/atom_dev_day_bot](https://t.me/atom_dev_day_bot)
+
 ---
 
 ## 🏗️ Architecture Overview
@@ -217,31 +222,4 @@ GOOGLE_GENERATIVE_AI_API_KEY=<your-gemini-api-key>
 
 ---
 
-## 📋 Task Breakdown & Contributions
-
-### Jonathan Ixcayau — Full Stack
-
-- [x] Nx monorepo setup (Angular + Node.js + Firebase)
-- [x] Custom visual flow editor (CDK Drag & Drop + SVG)
-- [x] All 6 node types with editable properties
-- [x] Properties panel with prompt/model editing
-- [x] Labeled output handles (Orchestrator routing)
-- [x] Manual edge creation (port-to-port)
-- [x] JSON export modal
-- [x] Deploy to Firestore endpoint
-- [x] Deployment history tracking
-- [x] In-app chat testing panel
-- [x] Dark mode + grid + snap-to-grid
-- [x] Glassmorphism premium UI design
-- [x] Orchestrator Service (Gemini intent classification)
-- [x] Catalog Validator + Specialist (Zod + JSON search)
-- [x] General Info Service (AI FAQ agent)
-- [x] Appointment Service (Zod scheduling + confirmation)
-- [x] Memory Service (Firestore persistent chat)
-- [x] Telegram webhook handler
-- [x] Vehicle catalog (25 entries)
-- [x] Firebase configuration (hosting + functions + firestore)
-
----
-
-_Built with ❤️ for DevDay Atom 2026 — Guatemala City_
+_Built with ❤️🫰 for DevDay Atom 2026 — Guatemala City_
