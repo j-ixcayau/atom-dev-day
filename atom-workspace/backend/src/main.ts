@@ -193,6 +193,33 @@ export const webChat = functions.https.onRequest(async (request, response) => {
 });
 
 /**
+ * Helper to format Markdown for Telegram's HTML parse mode
+ */
+function formatForTelegram(text: string): string {
+  if (!text) return text;
+
+  // Escape HTML special characters first
+  let formatted = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Convert **bold** to <b>bold</b>
+  formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+
+  // Convert [text](url) to <a href="url">text</a>
+  formatted = formatted.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+
+  // Markdown lists: * or - followed by space to bullet points (•)
+  formatted = formatted.replace(/^\s*[-*]\s+/gm, '• ');
+
+  // Headers: ### Header to <b>Header</b>
+  formatted = formatted.replace(/^#+\s+(.*)$/gm, '<b>$1</b>');
+
+  return formatted;
+}
+
+/**
  * Main Webhook Endpoint to handle incoming updates from Telegram
  */
 export const telegramWebhook = functions.https.onRequest(
@@ -217,13 +244,17 @@ export const telegramWebhook = functions.https.onRequest(
 
         // Execute dynamic pipeline
         const result = await processMessage(chatId, userMessage);
+        
+        // Format the response for Telegram HTML
+        const telegramFormattedResponse = formatForTelegram(result.response);
 
         try {
-          await bot.sendMessage(chatId, result.response, {
-            parse_mode: 'Markdown',
+          await bot.sendMessage(chatId, telegramFormattedResponse, {
+            parse_mode: 'HTML',
           });
-        } catch {
-          // Fallback: Telegram rejects malformed Markdown, so send as plain text
+        } catch (e) {
+          // Fallback: if HTML parsing fails, send as plain text
+          console.error('Telegram HTML formatting error:', e);
           await bot.sendMessage(chatId, result.response);
         }
       }
@@ -236,3 +267,4 @@ export const telegramWebhook = functions.https.onRequest(
     }
   },
 );
+
