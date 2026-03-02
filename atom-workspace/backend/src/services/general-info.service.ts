@@ -1,5 +1,7 @@
 import { generateText } from 'ai';
 import { google } from '@ai-sdk/google';
+import * as admin from 'firebase-admin';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface Message {
   role: 'user' | 'assistant' | 'system';
@@ -20,39 +22,48 @@ export class GeneralInfoService {
     summary: string,
     userName: string | null,
   ): Promise<string> {
+    
+    let faqContext = '';
+    
+    try {
+      const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY!);
+      const embeddingModel = genAI.getGenerativeModel({ model: 'gemini-embedding-001' });
+      const result = await embeddingModel.embedContent(newMessage);
+      const queryEmbedding = result.embedding.values;
+
+      const db = admin.firestore();
+      const knowledgeBaseRef = db.collection('knowledge_base');
+
+      const matches = await knowledgeBaseRef
+        .where('source', '==', 'faq')
+        // @ts-ignore
+        .findNearest('embedding', admin.firestore.FieldValue.vector(queryEmbedding), {
+             limit: 3,
+             distanceMeasure: 'COSINE' 
+        })
+        .get();
+
+      if (!matches.empty) {
+        faqContext = `\n**Knowledge Base Information:**\n`;
+        matches.forEach(doc => {
+          faqContext += `${doc.data()['content']}\n\n`;
+        });
+      }
+    } catch(err) {
+      console.error('[GeneralInfoService] Error querying vector database', err);
+    }
+
     const systemPrompt = `
 You are a friendly, professional Customer Service Agent for "Atom Auto — Guatemala's Premier Car Dealership", talking to ${userName || 'a customer'}.
 
 Conversation Summary: ${summary || 'None'}
 
 You have access to the following dealership information and must use it to answer questions:
-
-**Location & Hours:**
-- Address: 12 Calle 1-25 Zona 10, Guatemala City, Guatemala
-- Showroom Hours: Monday–Friday 8:00 AM – 6:00 PM, Saturday 9:00 AM – 3:00 PM, Sunday Closed
-- Online Support: Available 24/7 via our AI assistant (that's you!)
-
-**Financing:**
-- We offer financing through Banco Industrial, BAC Credomatic, and Banrural
-- Down payments start at 20% for new vehicles, 30% for used
-- Financing terms: 12, 24, 36, 48, or 60 months
-- Interest rates vary by credit profile (starting at 8.5% APR for qualified buyers)
-- Trade-in vehicles accepted and appraised on-site
-
-**Warranties:**
-- New vehicles: Full manufacturer warranty (3 years / 60,000 km, whichever comes first)
-- Certified Pre-Owned: 1-year / 20,000 km limited warranty
-- Extended warranty packages available for purchase
-- All vehicles include a 7-day money-back guarantee
-
-**Services:**
-- Free first maintenance service for new car purchases
-- On-site service center with certified technicians
-- Free vehicle inspection for trade-ins
-- Home delivery available within Guatemala City metro area
+${faqContext}
 
 Be conversational, helpful, and concise. If the user asks about something outside your knowledge, gently redirect them to call us at +502 2332-4567 or visit the showroom.
 Do not use markdown formatting — keep responses plain text suitable for Telegram.
+CRITICAL: Always reply in the exact same language the user is speaking. If the user speaks Spanish, reply entirely in Spanish.
 `;
 
     const messagesToSend: Message[] = [
