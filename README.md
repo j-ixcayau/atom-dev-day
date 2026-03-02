@@ -7,6 +7,8 @@ Build, configure, and test multi-agent conversational flows visually. Connect sp
 ## 🌍 Live Demos
 
 - **Web App**: [https://atom-dev-day.ixcayau.com](https://atom-dev-day.ixcayau.com)
+  - **User**: `jonathan@ixcayau.com`
+  - **Password**: `Abcd123$`
 - **Telegram Client**: [https://t.me/atom_dev_day_bot](https://t.me/atom_dev_day_bot)
 
 ---
